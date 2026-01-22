@@ -18,12 +18,14 @@
 This module contains the main script for the AquaSec Scan Results GH Action.
 """
 
+
 def run() -> None:
     """
     The main function is to run the AquaSec Scan Result solution on GitHub.
 
     @return: None
     """
+
 
 if __name__ == "__main__":
     run()
