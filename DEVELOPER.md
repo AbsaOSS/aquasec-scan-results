@@ -36,7 +36,7 @@ Create the shell file in the root directory. We use `run_script.sh` for demonstr
 touch run_script.sh
 ```
 Add the shebang line at the top of the sh script file.
-```
+```shell
 #!/bin/sh
 ```
 
@@ -44,7 +44,7 @@ Add the shebang line at the top of the sh script file.
 
 Set the configuration environment variables in the shell script following the structure below.
 
-```
+```shell
 # Essential environment variables for GitHub Action functionality
 TODO
 ```
@@ -52,11 +52,11 @@ TODO
 ### Running the script locally
 
 For running the GitHub action locally, incorporate these commands into the shell script and save it.
-```
+```shell
 python3 main.py
 ```
 The whole script should look like this example:
-```
+```shell
 #!/bin/sh
 
 # Essential environment variables for GitHub Action functionality
@@ -110,7 +110,7 @@ pylint src/convertor.py
 ### Expected Output
 
 This is an example of the expected console output after running the tool:
-```
+```text
 ************* Module main
 main.py:30:0: C0116: Missing function or method docstring (missing-function-docstring)
 
@@ -126,7 +126,7 @@ Black aims for consistency, generality, readability and reducing git diffs.
 The coding style used can be viewed as a strict subset of PEP 8.
 
 The root project file `pyproject.toml` defines the Black tool configuration.
-In this project we are accept a line length of 120 characters.
+In this project we accept a line length of 120 characters.
 We also exclude the `tests/` files from black formatting.
 
 Follow these steps to format your code with Black locally:
@@ -150,7 +150,7 @@ black src/convertor.py
 ### Expected Output
 
 This is an example of the expected console output after running the tool:
-```
+```text
 All done! ✨ 🍰 ✨
 1 file reformatted.
 ```
@@ -162,11 +162,11 @@ All done! ✨ 🍰 ✨
 This project uses the [my[py]](https://mypy.readthedocs.io/en/stable/) 
 tool which is a static type checker for Python.
 
-> Type checkers help ensure that you’re using variables and functions in your code correctly.
+> Type checkers help ensure that you're using variables and functions in your code correctly.
 > With mypy, add type hints (PEP 484) to your Python programs, 
 > and mypy will warn you when you use those types incorrectly.
 
-my[py] configuration is in `pyptoject.toml` file.
+my[py] configuration is in `pyproject.toml` file.
 
 Follow these steps to format your code with my[py] locally:
 
@@ -187,7 +187,7 @@ Example:
 ### Expected Output
 
 This is an example of the expected console output after running the tool:
-```
+```text
 Success: no issues found in 1 source file
 ```
 
