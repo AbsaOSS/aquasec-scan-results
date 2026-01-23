@@ -5,9 +5,26 @@ branding:
   icon: 'shield'
   color: 'blue'
 
+inputs:
+  aqua-key:
+    description: 'AquaSec API Key'
+    required: true
+  aqua-secret:
+    description: 'AquaSec API Secret'
+    required: true
+
+outputs:
+  bearer-token:
+    description: 'AquaSec Bearer Token for authentication'
+    value: ${{ steps.authenticate.outputs.bearer-token }}
+
 runs:
   using: 'composite'
   steps:
-    - name: Set Greeting
-      run: echo "Hello World."
+    - name: Authenticate with AquaSec
+      id: authenticate
+      run: python3 ${{ github.action_path }}/main.py
       shell: bash
+      env:
+        INPUT_AQUA-KEY: ${{ inputs.aqua-key }}
+        INPUT_AQUA-SECRET: ${{ inputs.aqua-secret }}
