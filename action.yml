@@ -1,0 +1,13 @@
+name: 'AquaSec Scan Results'
+description: 'Process and handle AquaSec security scan results for GitHub Security tab integration'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set Greeting
+      run: echo "Hello World."
+      shell: bash
