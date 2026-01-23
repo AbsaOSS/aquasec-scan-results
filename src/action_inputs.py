@@ -24,7 +24,7 @@ import os
 logger = logging.getLogger(__name__)
 
 
-class ActionInputs:
+class ActionInputs:  # pylint: disable=too-few-public-methods
     """Class to load and validate GitHub Actions inputs."""
 
     def __init__(self) -> None:
