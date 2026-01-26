@@ -15,53 +15,66 @@
 #
 
 """
-This module handles loading and validation of GitHub Actions inputs.
+This module contains an ActionInputs class method that loads and validates
+the inputs required for running a GitHub Action from environment variables.
 """
 
 import logging
-import os
+
+from src.utils.constants import AQUA_KEY, AQUA_SECRET
+from src.utils.utils import get_action_input
 
 logger = logging.getLogger(__name__)
 
 
-class ActionInputs:  # pylint: disable=too-few-public-methods
-    """Class to load and validate GitHub Actions inputs."""
+class ActionInputs:
+    """
+    A class representing all the action inputs. It is responsible for loading and managing
+    and validating the inputs required for running the GH Action.
+    """
 
-    def __init__(self) -> None:
+    @staticmethod
+    def get_aquasec_key() -> str:
         """
-        Initialize ActionInputs and load environment variables.
-
-        Raises:
-            ValueError: If required inputs are missing or empty.
-        """
-        self.aqua_key = self._load_input("INPUT_AQUA-KEY")
-        self.aqua_secret = self._load_input("INPUT_AQUA-SECRET")
-        self._mask_secrets()
-
-    def _load_input(self, env_var: str) -> str:
-        """
-        Load an input from environment variables.
-
-        Args:
-            env_var: The environment variable name.
+        Getter of the Aqua Security key.
 
         Returns:
-            The value of the environment variable.
-
-        Raises:
-            ValueError: If the environment variable is not set or is empty.
+            The Aqua Security key as a string.
         """
-        value = os.getenv(env_var)
-        if not value or not value.strip():
-            raise ValueError(f"Required input '{env_var}' is missing or empty")
-        return value.strip()
+        return get_action_input(AQUA_KEY)
 
-    def _mask_secrets(self) -> None:
+    @staticmethod
+    def get_aquasec_secret() -> str:
         """
-        Mask secrets in GitHub Actions logs.
+        Getter of the Aqua Security secret.
 
-        This adds special GitHub Actions commands to mask the secret values.
+        Returns:
+            The Aqua Security secret as a string.
         """
-        print(f"::add-mask::{self.aqua_key}")
-        print(f"::add-mask::{self.aqua_secret}")
-        logger.debug("Secrets have been masked in logs")
+        return get_action_input(AQUA_SECRET)
+
+    def validate(self):
+        """
+        Validates the action inputs.
+
+        Returns:
+            True if all required inputs are valid, False otherwise.
+        """
+        logger.info("AquaSec Scan Results - Input validation starting.")
+        error_count: int = 0
+        aquasec_key: str = self.get_aquasec_key()
+        aquasec_secret: str = self.get_aquasec_secret()
+
+        if not aquasec_key or not isinstance(aquasec_key, str):
+            logger.error("AQUASEC_KEY: str - not provided.")
+            error_count += 1
+
+        if not aquasec_secret or not isinstance(aquasec_secret, str):
+            logger.error("AQUASEC_SECRET: str - not provided.")
+            error_count += 1
+
+        if error_count > 0:
+            return False
+
+        logger.info("AquaSec Scan Results - Input validation successful.")
+        return True

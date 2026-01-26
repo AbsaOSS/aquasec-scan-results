@@ -13,3 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+"""
+This module contains utility functions used across the project.
+"""
+
+import logging
+import os
+
+logger = logging.getLogger(__name__)
+
+
+def get_action_input(name: str, default: str = "") -> str:
+    """
+    Get the input value from the environment variables.
+
+    Args:
+        name: The name of the input parameter.
+        default: The default value to return if the environment variable is not set.
+
+    Returns:
+        The value of the specified input parameter, or the default value.
+    """
+    return os.getenv(f'INPUT_{name.replace("-", "_").upper()}', default=default)

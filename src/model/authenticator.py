@@ -23,52 +23,38 @@ import hmac
 import json
 import logging
 import time
-from typing import Any, Dict
 
 import requests
+
+from src.utils.constants import GROUP_ID, AUTH_API_URL, HTTP_TIMEOUT, AQUA_KEY, AQUA_SECRET
+from src.utils.utils import get_action_input
 
 logger = logging.getLogger(__name__)
 
 
 class AquaSecAuthenticator:
-    """Class to handle AquaSec API authentication."""
+    """
+    Class to handle AquaSec API authentication.
+    """
 
-    API_URL = "https://eu-1.api.cloudsploit.com/v2/tokens"
-    GROUP_ID = 1228
-    ALLOWED_ENDPOINTS = ["GET"]
-    VALIDITY = 240
-    HTTP_TIMEOUT = 30
+    def __init__(self) -> None:
+        self.api_key: str = ""
+        self.api_secret: str = ""
 
-    def __init__(self, api_key: str, api_secret: str) -> None:
-        """
-        Initialize the AquaSec authenticator.
-
-        Args:
-            api_key: The AquaSec API key.
-            api_secret: The AquaSec API secret.
-        """
-        self.api_key = api_key
-        self.api_secret = api_secret
-        print(f"::add-mask::{self.api_key}")
-        print(f"::add-mask::{self.api_secret}")
-
-    def _generate_signature(self, timestamp: int, method: str, endpoint: str, body: str) -> str:
+    def _generate_signature(self, string_to_sign: str) -> str:
         """
         Generate HMAC-SHA256 signature for AquaSec API request.
 
         Args:
-            timestamp: Unix timestamp in seconds.
-            method: HTTP method (e.g., 'POST').
-            endpoint: API endpoint (e.g., '/v2/tokens').
-            body: Request body as JSON string.
+            string_to_sign: String to sign with HMAC.
 
         Returns:
             Hexadecimal signature string.
         """
-        string_to_sign = f"{timestamp}{method}{endpoint}{body}"
         signature = hmac.new(
             self.api_secret.encode("utf-8"), string_to_sign.encode("utf-8"), hashlib.sha256
         ).hexdigest()
+
         return signature
 
     def authenticate(self) -> str:
@@ -79,24 +65,25 @@ class AquaSecAuthenticator:
             Bearer token string.
 
         Raises:
-            RuntimeError: If authentication fails or returns non-200 status.
+            ValueError: If API returns invalid response or missing token.
+            RequestException: If connection to API fails.
         """
-        timestamp = int(time.time())
-        method = "POST"
-        endpoint = "/v2/tokens"
+        logger.info("AquaSec Scan Results - API authentication starting.")
 
-        # Prepare request body
-        request_body: Dict[str, Any] = {
-            "group_id": self.GROUP_ID,
-            "allowed_endpoints": self.ALLOWED_ENDPOINTS,
-            "validity": self.VALIDITY,
-        }
-        body_json = json.dumps(request_body)
+        self.api_key = get_action_input(AQUA_KEY)
+        self.api_secret = get_action_input(AQUA_SECRET)
+        method: str = "POST"
+        timestamp: int = int(time.time())
+        auth_endpoint: str = AUTH_API_URL + "/v2/tokens"
+        post_body: str = json.dumps(
+            {"group_id": GROUP_ID, "allowed_endpoints": ["GET"], "validity": 240}, separators=(",", ":")
+        )
+        string_to_sign: str = f"{timestamp}{method}/v2/tokens{post_body}"
 
         # Generate signature
-        signature = self._generate_signature(timestamp, method, endpoint, body_json)
+        signature = self._generate_signature(string_to_sign)
 
-        # Prepare headers
+        # Request headers
         headers = {
             "Content-Type": "application/json",
             "X-API-Key": self.api_key,
@@ -104,37 +91,17 @@ class AquaSecAuthenticator:
             "X-Signature": signature,
         }
 
-        # Make API request
-        logger.info("Authenticating with AquaSec API")
-        try:
-            response = requests.post(self.API_URL, headers=headers, data=body_json, timeout=self.HTTP_TIMEOUT)
-        except requests.exceptions.RequestException as ex:
-            logger.error("Failed to connect to AquaSec API: %s", str(ex))
-            raise RuntimeError(f"Failed to connect to AquaSec API: {ex}") from ex
+        # Make authentication API request
+        response = requests.post(auth_endpoint, headers=headers, data=post_body, timeout=HTTP_TIMEOUT)
 
         # Check response status
         if response.status_code != 200:
-            logger.error("AquaSec API returned status %d: %s", response.status_code, response.text)
-            raise RuntimeError(f"AquaSec API authentication failed with status {response.status_code}")
+            raise ValueError(f"Status {response.status_code}: {response.text}")
 
-        # Parse response
-        try:
-            response_data = response.json()
-        except json.JSONDecodeError as ex:
-            logger.error("Failed to parse AquaSec API response as JSON")
-            raise RuntimeError("Failed to parse AquaSec API response") from ex
+        # Extract token from response
+        bearer_token = response.json().get("data", "")
+        if not bearer_token:
+            raise ValueError("API response missing bearer token data.")
 
-        # Validate response structure
-        if response_data.get("status") != 200:
-            logger.error("AquaSec API returned error status in response: %s", response_data.get("status"))
-            raise RuntimeError(f"AquaSec API returned error status: {response_data.get('status')}")
-
-        token = response_data.get("data")
-        if not token:
-            logger.error("AquaSec API response missing token data")
-            raise RuntimeError("AquaSec API response missing token data")
-
-        # Mask the token in logs
-        print(f"::add-mask::{token}")
-        logger.info("Successfully authenticated with AquaSec API")
-        return token
+        logger.info("AquaSec Scan Results - API authentication successful.")
+        return bearer_token

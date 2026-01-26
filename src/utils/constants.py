@@ -13,3 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+"""
+This module centralises all constants used across the project.
+"""
+
+# General Action inputs
+AQUA_KEY = "AQUA_KEY"
+AQUA_SECRET = "AQUA_SECRET"
+
+# Authentication related constants
+AUTH_API_URL = "https://eu-1.api.cloudsploit.com"
+GROUP_ID = 1228
+HTTP_TIMEOUT = 30
