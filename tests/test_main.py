@@ -31,8 +31,11 @@ def test_run_successful(mocker):
     mocker.patch("main.setup_logging")
     mocker.patch("main.ActionInputs.validate", return_value=True)
     mocker.patch("main.AquaSecAuthenticator.authenticate", return_value="test_token")
+    mock_set_output = mocker.patch("main.set_action_output")
 
     run()
+
+    mock_set_output.assert_called_once_with("bearer-token", "test_token")
 
 
 def test_run_exits_when_validation_fails(mocker):
