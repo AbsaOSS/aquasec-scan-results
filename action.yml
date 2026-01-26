@@ -5,9 +5,42 @@ branding:
   icon: 'shield'
   color: 'blue'
 
+inputs:
+  aqua-key:
+    description: 'AquaSec API Key'
+    required: true
+  aqua-secret:
+    description: 'AquaSec API Secret'
+    required: true
+  verbose-logging:
+    description: 'Enable or disable verbose logging.'
+    required: false
+    default: 'false'
+
 runs:
   using: 'composite'
   steps:
-    - name: Set Greeting
-      run: echo "Hello World."
+    - name: Install Python dependencies
+      run: |
+        python3 -m pip install -r ${{ github.action_path }}/requirements.txt
+      shell: bash
+
+    - name: Prepare environment variables
+      run: |
+        echo "::add-mask::${{ inputs.aqua-key }}"
+        echo "::add-mask::${{ inputs.aqua-secret }}"
+        echo "INPUT_AQUA_KEY=${{ inputs.aqua-key }}" >> $GITHUB_ENV
+        echo "INPUT_AQUA_SECRET=${{ inputs.aqua-secret }}" >> $GITHUB_ENV
+        echo "INPUT_VERBOSE_LOGGING=${{ inputs.verbose-logging }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Run AquaSec Scan Results action
+      id: aquasec-scan-results
+      env:
+        INPUT_AQUA_KEY: ${{ env.INPUT_AQUA_KEY }}
+        INPUT_AQUA_SECRET: ${{ env.INPUT_AQUA_SECRET }}
+        INPUT_VERBOSE_LOGGING: ${{ env.INPUT_VERBOSE_LOGGING }}
+      run: |
+        export PYTHONPATH="${PYTHONPATH}:${{ github.action_path }}"
+        python3 ${{ github.action_path }}/main.py
       shell: bash

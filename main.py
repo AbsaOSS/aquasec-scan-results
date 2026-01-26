@@ -18,13 +18,36 @@
 This module contains the main script for the AquaSec Scan Results GH Action.
 """
 
+import logging
+import sys
+
+from requests.exceptions import RequestException
+
+from src.action_inputs import ActionInputs
+from src.model.authenticator import AquaSecAuthenticator
+from src.utils.logging_config import setup_logging
+
 
 def run() -> None:
     """
-    The main function is to run the AquaSec Scan Result solution on GitHub.
-
-    @return: None
+    The main function to run the AquaSec Scan Result solution on GitHub.
     """
+    setup_logging()
+    logger = logging.getLogger(__name__)
+
+    logger.info("AquaSec Scan Results - Starting.")
+
+    if not ActionInputs().validate():
+        logger.error("AquaSec Scan Results - Input validation failed.")
+        sys.exit(1)
+
+    try:
+        _bearer_token = AquaSecAuthenticator().authenticate()
+    except (ValueError, RequestException) as e:
+        logger.exception("Authentication failed: %s", str(e))
+        sys.exit(1)
+
+    logger.info("AquaSec Scan Results - Finished.")
 
 
 if __name__ == "__main__":
