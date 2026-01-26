@@ -36,3 +36,19 @@ def get_action_input(name: str, default: str = "") -> str:
         The value of the specified input parameter, or the default value.
     """
     return os.getenv(f'INPUT_{name.replace("-", "_").upper()}', default=default)
+
+
+def set_action_output(name: str, value: str) -> None:
+    """
+    Set the output value for a GitHub Action.
+
+    Args:
+        name: The name of the output parameter.
+        value: The value to set for the output parameter.
+    """
+    github_output = os.getenv("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a", encoding="utf-8") as output_file:
+            output_file.write(f"{name}={value}\n")
+    else:
+        logger.warning("GITHUB_OUTPUT environment variable not set. Output not saved.")

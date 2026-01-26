@@ -21,8 +21,14 @@ This module centralises all constants used across the project.
 # General Action inputs
 AQUA_KEY = "AQUA_KEY"
 AQUA_SECRET = "AQUA_SECRET"
+REPOSITORY_ID = "REPOSITORY_ID"
 
 # Authentication related constants
 AUTH_API_URL = "https://eu-1.api.cloudsploit.com"
 GROUP_ID = 1228
 HTTP_TIMEOUT = 30
+
+# Scan fetching related constants
+SCAN_API_URL = "https://eu-1.codesec.aquasec.com/api/v1/scans/results"
+PAGE_SIZE = 100
+SCAN_DELAY_SECONDS = 2

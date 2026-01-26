@@ -18,7 +18,7 @@
 Tests for project utils methods.
 """
 
-from src.utils.utils import get_action_input
+from src.utils.utils import get_action_input, set_action_output
 
 
 # get_action_input
@@ -40,3 +40,24 @@ def test_get_input_without_hyphen(mocker):
 
     mock_getenv.assert_called_with("INPUT_ANOTHERINPUT", default='')
     assert "another_test_value" == actual
+
+
+# set_action_output
+
+
+def test_set_action_output_writes_to_file(mocker, tmp_path):
+    output_file = tmp_path / "github_output.txt"
+    mocker.patch("os.getenv", return_value=str(output_file))
+
+    set_action_output("test-output", "test-value")
+
+    assert output_file.read_text() == "test-output=test-value\n"
+
+
+def test_set_action_output_logs_warning_when_github_output_not_set(mocker):
+    mocker.patch("os.getenv", return_value=None)
+    mock_logger = mocker.patch("src.utils.utils.logger")
+
+    set_action_output("test-output", "test-value")
+
+    mock_logger.warning.assert_called_once()
