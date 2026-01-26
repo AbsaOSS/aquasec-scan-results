@@ -27,6 +27,8 @@ runs:
 
     - name: Prepare environment variables
       run: |
+        echo "::add-mask::${{ inputs.aqua-key }}"
+        echo "::add-mask::${{ inputs.aqua-secret }}"
         echo "INPUT_AQUA_KEY=${{ inputs.aqua-key }}" >> $GITHUB_ENV
         echo "INPUT_AQUA_SECRET=${{ inputs.aqua-secret }}" >> $GITHUB_ENV
         echo "INPUT_VERBOSE_LOGGING=${{ inputs.verbose-logging }}" >> $GITHUB_ENV

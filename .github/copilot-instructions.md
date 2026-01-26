@@ -30,6 +30,7 @@ Testing
 - Minimal tests, no redundant tests
 - Comment sections: `# method_name` before tests
 - Use `mocker.patch("module.dependency")` or `mocker.patch.object(Class, "method")`
+- Use `monkeypatch.setenv("VAR", "value")` for environment variables
 - Assert pattern: `assert expected == actual`
 - Use `pytest.raises(Exception)` for exceptions
 

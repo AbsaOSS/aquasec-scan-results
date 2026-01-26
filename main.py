@@ -42,9 +42,9 @@ def run() -> None:
         sys.exit(1)
 
     try:
-        bearer_token = AquaSecAuthenticator().authenticate()
+        _bearer_token = AquaSecAuthenticator().authenticate()
     except (ValueError, RequestException) as e:
-        logger.error("Authentication failed: %s", str(e))
+        logger.exception("Authentication failed: %s", str(e))
         sys.exit(1)
 
     logger.info("AquaSec Scan Results - Finished.")
