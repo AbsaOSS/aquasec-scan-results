@@ -36,22 +36,3 @@ def get_action_input(name: str, default: str = "") -> str:
         The value of the specified input parameter, or the default value.
     """
     return os.getenv(f'INPUT_{name.replace("-", "_").upper()}', default=default)
-
-
-def set_action_output(name: str, value: str) -> None:
-    """
-    Set a GitHub Actions output.
-
-    Args:
-        name: The output name.
-        value: The output value.
-    """
-    github_output = os.getenv("GITHUB_OUTPUT")
-    if github_output:
-        with open(github_output, "a", encoding="utf-8") as output_file:
-            output_file.write(f"{name}={value}\n")
-        logger.debug("Set output '%s' to masked value", name)
-    else:
-        # Fallback for local testing
-        print(f"{name}=***")
-        logger.debug("GITHUB_OUTPUT not set, using fallback output method")

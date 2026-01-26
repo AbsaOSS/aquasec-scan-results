@@ -26,7 +26,6 @@ from requests.exceptions import RequestException
 from src.action_inputs import ActionInputs
 from src.model.authenticator import AquaSecAuthenticator
 from src.utils.logging_config import setup_logging
-from src.utils.utils import set_action_output
 
 
 def run() -> None:
@@ -44,7 +43,6 @@ def run() -> None:
 
     try:
         bearer_token = AquaSecAuthenticator().authenticate()
-        set_action_output("bearer-token", bearer_token)
     except (ValueError, RequestException) as e:
         logger.error("Authentication failed: %s", str(e))
         sys.exit(1)
