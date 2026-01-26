@@ -18,105 +18,50 @@
 Tests for main module.
 """
 
-from unittest.mock import MagicMock, mock_open, patch
-
 import pytest
+from requests.exceptions import RequestException
 
-import main
+from main import run
 
 
-class TestMain:
-    """Test cases for main module."""
+# run
 
-    @patch("main.ActionInputs")
-    @patch("main.AquaSecAuthenticator")
-    @patch("main.set_output")
-    @patch("main.os.getenv")
-    def test_run_success(self, mock_getenv, mock_set_output, mock_authenticator_class, mock_inputs_class):
-        """Test successful run."""
-        # Setup mocks
-        mock_getenv.return_value = "/tmp/github_output"
-        mock_inputs = MagicMock()
-        mock_inputs.aqua_key = "test-key"
-        mock_inputs.aqua_secret = "test-secret"
-        mock_inputs_class.return_value = mock_inputs
 
-        mock_authenticator = MagicMock()
-        mock_authenticator.authenticate.return_value = "test-bearer-token"
-        mock_authenticator_class.return_value = mock_authenticator
+def test_run_successful(mocker):
+    mocker.patch("main.setup_logging")
+    mocker.patch("main.ActionInputs.validate", return_value=True)
+    mocker.patch("main.AquaSecAuthenticator.authenticate", return_value="test_token")
 
-        # Run
-        main.run()
+    run()
 
-        # Verify
-        mock_inputs_class.assert_called_once()
-        mock_authenticator_class.assert_called_once_with("test-key", "test-secret")
-        mock_authenticator.authenticate.assert_called_once()
-        mock_set_output.assert_called_once_with("bearer-token", "test-bearer-token")
 
-    @patch("main.ActionInputs")
-    def test_run_input_validation_error(self, mock_inputs_class):
-        """Test run with input validation error."""
-        mock_inputs_class.side_effect = ValueError("Missing input")
+def test_run_exits_when_validation_fails(mocker):
+    mocker.patch("main.setup_logging")
+    mocker.patch("main.ActionInputs.validate", return_value=False)
 
-        with pytest.raises(SystemExit) as exc_info:
-            main.run()
+    with pytest.raises(SystemExit) as exc_info:
+        run()
 
-        assert exc_info.value.code == 1
+    assert exc_info.value.code == 1
 
-    @patch("main.ActionInputs")
-    @patch("main.AquaSecAuthenticator")
-    def test_run_authentication_error(self, mock_authenticator_class, mock_inputs_class):
-        """Test run with authentication error."""
-        mock_inputs = MagicMock()
-        mock_inputs.aqua_key = "test-key"
-        mock_inputs.aqua_secret = "test-secret"
-        mock_inputs_class.return_value = mock_inputs
 
-        mock_authenticator = MagicMock()
-        mock_authenticator.authenticate.side_effect = RuntimeError("Authentication failed")
-        mock_authenticator_class.return_value = mock_authenticator
+def test_run_exits_when_authentication_raises_value_error(mocker):
+    mocker.patch("main.setup_logging")
+    mocker.patch("main.ActionInputs.validate", return_value=True)
+    mocker.patch("main.AquaSecAuthenticator.authenticate", side_effect=ValueError("Auth failed"))
 
-        with pytest.raises(SystemExit) as exc_info:
-            main.run()
+    with pytest.raises(SystemExit) as exc_info:
+        run()
 
-        assert exc_info.value.code == 1
+    assert exc_info.value.code == 1
 
-    @patch("main.ActionInputs")
-    @patch("main.AquaSecAuthenticator")
-    def test_run_unexpected_error(self, mock_authenticator_class, mock_inputs_class):
-        """Test run with unexpected error."""
-        mock_inputs = MagicMock()
-        mock_inputs.aqua_key = "test-key"
-        mock_inputs.aqua_secret = "test-secret"
-        mock_inputs_class.return_value = mock_inputs
 
-        mock_authenticator = MagicMock()
-        mock_authenticator.authenticate.side_effect = Exception("Unexpected error")
-        mock_authenticator_class.return_value = mock_authenticator
+def test_run_exits_when_authentication_raises_request_exception(mocker):
+    mocker.patch("main.setup_logging")
+    mocker.patch("main.ActionInputs.validate", return_value=True)
+    mocker.patch("main.AquaSecAuthenticator.authenticate", side_effect=RequestException("Connection failed"))
 
-        with pytest.raises(SystemExit) as exc_info:
-            main.run()
+    with pytest.raises(SystemExit) as exc_info:
+        run()
 
-        assert exc_info.value.code == 1
-
-    @patch("main.os.getenv")
-    @patch("builtins.open", new_callable=mock_open)
-    def test_set_output_with_github_output(self, mock_file, mock_getenv):
-        """Test set_output with GITHUB_OUTPUT environment variable."""
-        mock_getenv.return_value = "/tmp/github_output"
-
-        main.set_output("test-name", "test-value")
-
-        mock_file.assert_called_once_with("/tmp/github_output", "a", encoding="utf-8")
-        mock_file().write.assert_called_once_with("test-name=test-value\n")
-
-    @patch("main.os.getenv")
-    @patch("builtins.print")
-    def test_set_output_without_github_output(self, mock_print, mock_getenv):
-        """Test set_output without GITHUB_OUTPUT environment variable."""
-        mock_getenv.return_value = None
-
-        main.set_output("test-name", "test-value")
-
-        mock_print.assert_called_once_with("test-name=***")
+    assert exc_info.value.code == 1

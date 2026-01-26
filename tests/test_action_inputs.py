@@ -18,87 +18,65 @@
 Tests for action_inputs module.
 """
 
-import os
-from unittest.mock import patch
-
-import pytest
-
 from src.action_inputs import ActionInputs
 
 
-class TestActionInputs:
-    """Test cases for ActionInputs class."""
+# get_aquasec_key
 
-    @patch("src.action_inputs.os.getenv")
-    @patch("builtins.print")
-    def test_load_inputs_success(self, mock_print, mock_getenv):
-        """Test successful loading of inputs."""
-        mock_getenv.side_effect = lambda key: {
-            "INPUT_AQUA-KEY": "test-api-key",
-            "INPUT_AQUA-SECRET": "test-api-secret",
-        }.get(key)
 
-        inputs = ActionInputs()
+def test_get_aquasec_key_returns_value(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="test_key")
 
-        assert inputs.aqua_key == "test-api-key"
-        assert inputs.aqua_secret == "test-api-secret"
-        # Verify secrets are masked
-        assert mock_print.call_count == 2
+    actual = ActionInputs.get_aquasec_key()
 
-    @patch("src.action_inputs.os.getenv")
-    def test_load_inputs_missing_key(self, mock_getenv):
-        """Test error when API key is missing."""
-        mock_getenv.side_effect = lambda key: {
-            "INPUT_AQUA-KEY": None,
-            "INPUT_AQUA-SECRET": "test-api-secret",
-        }.get(key)
+    assert "test_key" == actual
 
-        with pytest.raises(ValueError, match="Required input 'INPUT_AQUA-KEY' is missing or empty"):
-            ActionInputs()
 
-    @patch("src.action_inputs.os.getenv")
-    def test_load_inputs_missing_secret(self, mock_getenv):
-        """Test error when API secret is missing."""
-        mock_getenv.side_effect = lambda key: {
-            "INPUT_AQUA-KEY": "test-api-key",
-            "INPUT_AQUA-SECRET": None,
-        }.get(key)
+# get_aquasec_secret
 
-        with pytest.raises(ValueError, match="Required input 'INPUT_AQUA-SECRET' is missing or empty"):
-            ActionInputs()
 
-    @patch("src.action_inputs.os.getenv")
-    def test_load_inputs_empty_key(self, mock_getenv):
-        """Test error when API key is empty."""
-        mock_getenv.side_effect = lambda key: {
-            "INPUT_AQUA-KEY": "   ",
-            "INPUT_AQUA-SECRET": "test-api-secret",
-        }.get(key)
+def test_get_aquasec_secret_returns_value(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="test_secret")
 
-        with pytest.raises(ValueError, match="Required input 'INPUT_AQUA-KEY' is missing or empty"):
-            ActionInputs()
+    actual = ActionInputs.get_aquasec_secret()
 
-    @patch("src.action_inputs.os.getenv")
-    def test_load_inputs_empty_secret(self, mock_getenv):
-        """Test error when API secret is empty."""
-        mock_getenv.side_effect = lambda key: {
-            "INPUT_AQUA-KEY": "test-api-key",
-            "INPUT_AQUA-SECRET": "",
-        }.get(key)
+    assert "test_secret" == actual
 
-        with pytest.raises(ValueError, match="Required input 'INPUT_AQUA-SECRET' is missing or empty"):
-            ActionInputs()
 
-    @patch("src.action_inputs.os.getenv")
-    @patch("builtins.print")
-    def test_load_inputs_with_whitespace(self, mock_print, mock_getenv):
-        """Test that inputs are trimmed properly."""
-        mock_getenv.side_effect = lambda key: {
-            "INPUT_AQUA-KEY": "  test-api-key  ",
-            "INPUT_AQUA-SECRET": "  test-api-secret  ",
-        }.get(key)
+# validate
 
-        inputs = ActionInputs()
 
-        assert inputs.aqua_key == "test-api-key"
-        assert inputs.aqua_secret == "test-api-secret"
+def test_validate_returns_true_when_all_inputs_provided(mocker):
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
+
+    actual = ActionInputs().validate()
+
+    assert actual is True
+
+
+def test_validate_returns_false_when_key_missing(mocker):
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
+
+    actual = ActionInputs().validate()
+
+    assert actual is False
+
+
+def test_validate_returns_false_when_secret_missing(mocker):
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="")
+
+    actual = ActionInputs().validate()
+
+    assert actual is False
+
+
+def test_validate_returns_false_when_both_missing(mocker):
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="")
+
+    actual = ActionInputs().validate()
+
+    assert actual is False
