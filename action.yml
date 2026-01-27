@@ -12,10 +12,18 @@ inputs:
   aqua-secret:
     description: 'AquaSec API Secret'
     required: true
+  repository-id:
+    description: 'AquaSec Repository ID (UUID format)'
+    required: true
   verbose-logging:
     description: 'Enable or disable verbose logging.'
     required: false
     default: 'false'
+
+outputs:
+  scan-findings:
+    description: 'JSON containing all AquaSec security scan findings'
+    value: ${{ steps.aquasec-scan-results.outputs.scan_findings }}
 
 runs:
   using: 'composite'
@@ -29,8 +37,10 @@ runs:
       run: |
         echo "::add-mask::${{ inputs.aqua-key }}"
         echo "::add-mask::${{ inputs.aqua-secret }}"
+        echo "::add-mask::${{ inputs.repository-id }}"
         echo "INPUT_AQUA_KEY=${{ inputs.aqua-key }}" >> $GITHUB_ENV
         echo "INPUT_AQUA_SECRET=${{ inputs.aqua-secret }}" >> $GITHUB_ENV
+        echo "INPUT_REPOSITORY_ID=${{ inputs.repository-id }}" >> $GITHUB_ENV
         echo "INPUT_VERBOSE_LOGGING=${{ inputs.verbose-logging }}" >> $GITHUB_ENV
       shell: bash
 
@@ -39,6 +49,7 @@ runs:
       env:
         INPUT_AQUA_KEY: ${{ env.INPUT_AQUA_KEY }}
         INPUT_AQUA_SECRET: ${{ env.INPUT_AQUA_SECRET }}
+        INPUT_REPOSITORY_ID: ${{ env.INPUT_REPOSITORY_ID }}
         INPUT_VERBOSE_LOGGING: ${{ env.INPUT_VERBOSE_LOGGING }}
       run: |
         export PYTHONPATH="${PYTHONPATH}:${{ github.action_path }}"

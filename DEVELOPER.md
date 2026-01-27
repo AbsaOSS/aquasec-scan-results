@@ -48,6 +48,7 @@ Set the configuration environment variables in the shell script following the st
 # Essential environment variables for GitHub Action functionality
 export INPUT_AQUA_KEY="your-aquasec-api-key"
 export INPUT_AQUA_SECRET="your-aquasec-api-secret"
+export INPUT_REPOSITORY_ID="your-aquasec-repository-id"
 ```
 
 ### Running the script locally
@@ -63,6 +64,7 @@ The whole script should look like this example:
 # Essential environment variables for GitHub Action functionality
 export INPUT_AQUA_KEY="your-aquasec-api-key"
 export INPUT_AQUA_SECRET="your-aquasec-api-secret"
+export INPUT_REPOSITORY_ID="your-aquasec-repository-id"
 
 python3 main.py
 ```

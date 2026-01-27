@@ -20,6 +20,7 @@ This module contains utility functions used across the project.
 
 import logging
 import os
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -36,3 +37,22 @@ def get_action_input(name: str, default: str = "") -> str:
         The value of the specified input parameter, or the default value.
     """
     return os.getenv(f'INPUT_{name.replace("-", "_").upper()}', default=default)
+
+
+def set_action_output(name: str, value: str, default_output_path: str = "default_output.txt") -> None:
+    """
+    Write an action output to a file in the format expected by GitHub Actions.
+
+    Args:
+        name: The name of the output parameter.
+        value: The value of the output parameter.
+        default_output_path: The default file path to which the output is written if the GITHUB_OUTPUT
+        environment variable is not set.
+    """
+    output_file = os.getenv("GITHUB_OUTPUT", default_output_path)
+    try:
+        with open(output_file, "a", encoding="utf-8") as f:
+            f.write(f"{name}={value}\n")
+    except IOError as e:
+        logger.exception("Failed to write output to %s: %s", output_file, e)
+        sys.exit(1)

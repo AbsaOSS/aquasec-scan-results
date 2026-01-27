@@ -18,6 +18,7 @@
 This module contains the main script for the AquaSec Scan Results GH Action.
 """
 
+import json
 import logging
 import sys
 
@@ -25,7 +26,9 @@ from requests.exceptions import RequestException
 
 from src.action_inputs import ActionInputs
 from src.model.authenticator import AquaSecAuthenticator
+from src.model.scan_fetcher import ScanFetcher
 from src.utils.logging_config import setup_logging
+from src.utils.utils import set_action_output
 
 
 def run() -> None:
@@ -42,10 +45,18 @@ def run() -> None:
         sys.exit(1)
 
     try:
-        _bearer_token = AquaSecAuthenticator().authenticate()
+        bearer_token = AquaSecAuthenticator().authenticate()
     except (ValueError, RequestException) as e:
         logger.exception("Authentication failed: %s", str(e))
         sys.exit(1)
+
+    try:
+        findings = ScanFetcher(bearer_token).fetch_findings()
+    except (ValueError, RequestException) as e:
+        logger.exception("Fetching scan results failed: %s", str(e))
+        sys.exit(1)
+
+    set_action_output("scan_findings", json.dumps(findings))
 
     logger.info("AquaSec Scan Results - Finished.")
 
