@@ -70,7 +70,7 @@ def test_set_output_custom_path(mocker):
 def test_set_action_output_ioerror(mocker):
     mocker.patch("os.getenv", return_value="fail.txt")
     mock_open = mocker.patch("builtins.open", side_effect=IOError("disk full"))
-    mock_logger = mocker.patch("src.utils.utils.logger.error")
+    mock_logger = mocker.patch("src.utils.utils.logger.exception")
     mock_exit = mocker.patch("sys.exit")
 
     set_action_output("fail-output", "fail-value", "fail.txt")
