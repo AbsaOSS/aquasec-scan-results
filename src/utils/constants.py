@@ -31,4 +31,4 @@ HTTP_TIMEOUT = 30
 # Scan fetching related constants
 SCAN_API_URL = "https://eu-1.codesec.aquasec.com/api/v1/scans/results"
 PAGE_SIZE = 100
-SCAN_DELAY_SECONDS = 2
+FETCH_SLEEP_SECONDS = 2

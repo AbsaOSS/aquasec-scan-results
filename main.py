@@ -45,24 +45,18 @@ def run() -> None:
         sys.exit(1)
 
     try:
-        _bearer_token = AquaSecAuthenticator().authenticate()
+        bearer_token = AquaSecAuthenticator().authenticate()
     except (ValueError, RequestException) as e:
         logger.exception("Authentication failed: %s", str(e))
         sys.exit(1)
 
     try:
-        repository_id = ActionInputs.get_repository_id()
-        scan_fetcher = ScanFetcher(_bearer_token, repository_id)
-        findings = scan_fetcher.fetch_findings()
-
-        # Convert findings to JSON string for output
-        findings_json = json.dumps(findings)
-        set_action_output("scan-findings", findings_json)
-
-        logger.info("AquaSec Scan Results - Successfully fetched and saved %d findings.", findings["total"])
+        findings = ScanFetcher(bearer_token).fetch_findings()
     except (ValueError, RequestException) as e:
         logger.exception("Fetching scan results failed: %s", str(e))
         sys.exit(1)
+
+    set_action_output("scan_findings", json.dumps(findings))
 
     logger.info("AquaSec Scan Results - Finished.")
 

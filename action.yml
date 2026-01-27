@@ -23,6 +23,7 @@ inputs:
 outputs:
   scan-findings:
     description: 'JSON containing all AquaSec security scan findings'
+    value: ${{ steps.aquasec-scan-results.outputs.scan_findings }}
 
 runs:
   using: 'composite'

@@ -24,7 +24,8 @@ import time
 
 import requests
 
-from src.utils.constants import SCAN_API_URL, PAGE_SIZE, SCAN_DELAY_SECONDS, HTTP_TIMEOUT
+from src.utils.constants import SCAN_API_URL, PAGE_SIZE, FETCH_SLEEP_SECONDS, HTTP_TIMEOUT, REPOSITORY_ID
+from src.utils.utils import get_action_input
 
 logger = logging.getLogger(__name__)
 
@@ -34,54 +35,40 @@ class ScanFetcher:
     Class to fetch AquaSec security scan results with pagination support.
     """
 
-    def __init__(self, bearer_token: str, repository_id: str) -> None:
-        """
-        Initialize with bearer token and repository ID.
-
-        Args:
-            bearer_token: Bearer token for authentication.
-            repository_id: AquaSec repository ID.
-        """
+    def __init__(self, bearer_token: str) -> None:
         self.bearer_token: str = bearer_token
-        self.repository_id: str = repository_id
+        self.repository_id: str = ""
 
     def fetch_findings(self) -> dict:
         """
         Fetch all security findings from AquaSec API with pagination.
 
         Returns:
-            Dictionary containing total count and all findings data.
+            Dictionary containing total count and security findings.
 
         Raises:
             ValueError: If API returns invalid response or empty response.
             RequestException: If connection to API fails.
         """
-        logger.info("AquaSec Scan Results - Starting to fetch scan findings.")
+        logger.info("AquaSec Scan Results - Scan findings fetch starting.")
 
-        findings_list = []
+        findings = []
         page_num = 1
         total_expected = 0
+        self.repository_id = get_action_input(REPOSITORY_ID)
 
         while True:
-            logger.info("Fetching page %d...", page_num)
+            logger.info("AquaSec Scan Results - Fetching page %d...", page_num)
 
-            request_url = f"{SCAN_API_URL}?repositoryIds={self.repository_id}&size={PAGE_SIZE}&page={page_num}"
+            fetch_endpoint = f"{SCAN_API_URL}?repositoryIds={self.repository_id}&size={PAGE_SIZE}&page={page_num}"
+            headers = {"Authorization": f"Bearer {self.bearer_token}", "Accept": "application/json"}
 
-            headers = {
-                "Authorization": f"Bearer {self.bearer_token}",
-                "Accept": "application/json"
-            }
-
-            # Make API request
-            response = requests.get(request_url, headers=headers, timeout=HTTP_TIMEOUT)
+            # Make scan fetching API request
+            response = requests.get(fetch_endpoint, headers=headers, timeout=HTTP_TIMEOUT)
 
             # Check response status
             if response.status_code != 200:
                 raise ValueError(f"Status {response.status_code}: {response.text}")
-
-            # Check for empty response
-            if not response.text:
-                raise ValueError("API returned empty response")
 
             # Parse JSON response
             try:
@@ -89,34 +76,28 @@ class ScanFetcher:
             except json.JSONDecodeError as e:
                 raise ValueError(f"Invalid JSON response: {str(e)}") from e
 
-            # Extract total from first page
+            # Extract total expected findings
             if page_num == 1:
                 total_expected = page_response.get("total", 0)
-                logger.info("Total findings expected: %d", total_expected)
-
-            # Extract page data
-            page_data = page_response.get("data", [])
-            page_count = len(page_data)
-            logger.info("Retrieved %d findings on page %d", page_count, page_num)
+                logger.debug("Expected %d of total findings.", total_expected)
 
             # Accumulate findings
-            findings_list.extend(page_data)
+            page_data = page_response.get("data", [])
+            page_count = len(page_data)
+            logger.debug("Retrieved %d findings on page %d", page_count, page_num)
 
-            findings_count = len(findings_list)
+            # Accumulate findings
+            findings.extend(page_data)
 
             # Check if we've fetched all findings
-            if findings_count >= total_expected or page_count == 0:
+            if len(findings) >= total_expected or page_count == 0:
                 break
 
-            # Move to next page
+            # Move to next page with sleep to avoid rate limiting
             page_num += 1
+            time.sleep(FETCH_SLEEP_SECONDS)
 
-            # Add delay between requests
-            time.sleep(SCAN_DELAY_SECONDS)
+        findings_total = len(findings)
+        logger.info("AquaSec Scan Results - Scan findings fetch successful (%d total).", findings_total)
 
-        logger.info("AquaSec Scan Results - Fetched %d total findings.", len(findings_list))
-
-        return {
-            "total": len(findings_list),
-            "data": findings_list
-        }
+        return {"total": findings_total, "data": findings}

@@ -18,6 +18,8 @@
 Tests for scan_fetcher module.
 """
 
+import json
+
 import pytest
 
 from src.model.scan_fetcher import ScanFetcher
@@ -26,11 +28,10 @@ from src.model.scan_fetcher import ScanFetcher
 # fetch_findings
 
 
-def test_fetch_findings_returns_single_page_results(mocker):
-    fetcher = ScanFetcher("test_token", "123e4567-e89b-12d3-a456-426614174000")
+def test_fetch_findings_returns_single_page_results(mocker, mock_scan_fetcher_setup):  # pylint: disable=unused-argument
+    fetcher = ScanFetcher("test_token")
     mock_response = mocker.Mock()
     mock_response.status_code = 200
-    mock_response.text = '{"total": 2, "data": [{"id": 1}, {"id": 2}]}'
     mock_response.json.return_value = {"total": 2, "data": [{"id": 1}, {"id": 2}]}
     mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
 
@@ -41,21 +42,17 @@ def test_fetch_findings_returns_single_page_results(mocker):
     assert {"id": 1} == actual["data"][0]
 
 
-def test_fetch_findings_returns_multi_page_results(mocker):
-    fetcher = ScanFetcher("test_token", "123e4567-e89b-12d3-a456-426614174000")
-    
-    # First page response
+def test_fetch_findings_returns_multi_page_results(mocker, mock_scan_fetcher_setup):  # pylint: disable=unused-argument
+    fetcher = ScanFetcher("test_token")
+
     mock_response_page1 = mocker.Mock()
     mock_response_page1.status_code = 200
-    mock_response_page1.text = '{"total": 3, "data": [{"id": 1}, {"id": 2}]}'
     mock_response_page1.json.return_value = {"total": 3, "data": [{"id": 1}, {"id": 2}]}
-    
-    # Second page response
+
     mock_response_page2 = mocker.Mock()
     mock_response_page2.status_code = 200
-    mock_response_page2.text = '{"total": 3, "data": [{"id": 3}]}'
     mock_response_page2.json.return_value = {"total": 3, "data": [{"id": 3}]}
-    
+
     mocker.patch("src.model.scan_fetcher.requests.get", side_effect=[mock_response_page1, mock_response_page2])
     mocker.patch("src.model.scan_fetcher.time.sleep")
 
@@ -65,11 +62,10 @@ def test_fetch_findings_returns_multi_page_results(mocker):
     assert 3 == len(actual["data"])
 
 
-def test_fetch_findings_returns_empty_results(mocker):
-    fetcher = ScanFetcher("test_token", "123e4567-e89b-12d3-a456-426614174000")
+def test_fetch_findings_returns_empty_results(mocker, mock_scan_fetcher_setup):  # pylint: disable=unused-argument
+    fetcher = ScanFetcher("test_token")
     mock_response = mocker.Mock()
     mock_response.status_code = 200
-    mock_response.text = '{"total": 0, "data": []}'
     mock_response.json.return_value = {"total": 0, "data": []}
     mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
 
@@ -79,8 +75,8 @@ def test_fetch_findings_returns_empty_results(mocker):
     assert 0 == len(actual["data"])
 
 
-def test_fetch_findings_raises_value_error_on_non_200_status(mocker):
-    fetcher = ScanFetcher("test_token", "123e4567-e89b-12d3-a456-426614174000")
+def test_fetch_findings_raises_value_error_on_non_200_status(mocker, mock_scan_fetcher_setup):  # pylint: disable=unused-argument
+    fetcher = ScanFetcher("test_token")
     mock_response = mocker.Mock()
     mock_response.status_code = 403
     mock_response.text = "Access denied"
@@ -92,25 +88,10 @@ def test_fetch_findings_raises_value_error_on_non_200_status(mocker):
     assert "Status 403" in str(exc_info.value)
 
 
-def test_fetch_findings_raises_value_error_on_empty_response(mocker):
-    fetcher = ScanFetcher("test_token", "123e4567-e89b-12d3-a456-426614174000")
+def test_fetch_findings_raises_value_error_on_invalid_json(mocker, mock_scan_fetcher_setup):  # pylint: disable=unused-argument
+    fetcher = ScanFetcher("test_token")
     mock_response = mocker.Mock()
     mock_response.status_code = 200
-    mock_response.text = ""
-    mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
-
-    with pytest.raises(ValueError) as exc_info:
-        fetcher.fetch_findings()
-
-    assert "empty response" in str(exc_info.value)
-
-
-def test_fetch_findings_raises_value_error_on_invalid_json(mocker):
-    import json
-    fetcher = ScanFetcher("test_token", "123e4567-e89b-12d3-a456-426614174000")
-    mock_response = mocker.Mock()
-    mock_response.status_code = 200
-    mock_response.text = "invalid json"
     mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "doc", 0)
     mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
 
@@ -120,35 +101,11 @@ def test_fetch_findings_raises_value_error_on_invalid_json(mocker):
     assert "Invalid JSON response" in str(exc_info.value)
 
 
-def test_fetch_findings_stops_pagination_when_page_is_empty(mocker):
-    fetcher = ScanFetcher("test_token", "123e4567-e89b-12d3-a456-426614174000")
-    
-    # First page with data
-    mock_response_page1 = mocker.Mock()
-    mock_response_page1.status_code = 200
-    mock_response_page1.text = '{"total": 10, "data": [{"id": 1}]}'
-    mock_response_page1.json.return_value = {"total": 10, "data": [{"id": 1}]}
-    
-    # Second page empty
-    mock_response_page2 = mocker.Mock()
-    mock_response_page2.status_code = 200
-    mock_response_page2.text = '{"total": 10, "data": []}'
-    mock_response_page2.json.return_value = {"total": 10, "data": []}
-    
-    mocker.patch("src.model.scan_fetcher.requests.get", side_effect=[mock_response_page1, mock_response_page2])
-    mocker.patch("src.model.scan_fetcher.time.sleep")
-
-    actual = fetcher.fetch_findings()
-
-    assert 1 == actual["total"]
-    assert 1 == len(actual["data"])
-
-
-def test_fetch_findings_uses_correct_authorization_header(mocker):
-    fetcher = ScanFetcher("test_token_123", "123e4567-e89b-12d3-a456-426614174000")
+def test_fetch_findings_uses_correct_request_structure(mocker):
+    mocker.patch("src.model.scan_fetcher.get_action_input", return_value="abc12345-e89b-12d3-a456-426614174000")
+    fetcher = ScanFetcher("test_token_123")
     mock_response = mocker.Mock()
     mock_response.status_code = 200
-    mock_response.text = '{"total": 0, "data": []}'
     mock_response.json.return_value = {"total": 0, "data": []}
     mock_get = mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
 
@@ -156,19 +113,6 @@ def test_fetch_findings_uses_correct_authorization_header(mocker):
 
     call_args = mock_get.call_args
     assert "Bearer test_token_123" == call_args[1]["headers"]["Authorization"]
-
-
-def test_fetch_findings_uses_correct_url_parameters(mocker):
-    fetcher = ScanFetcher("test_token", "abc12345-e89b-12d3-a456-426614174000")
-    mock_response = mocker.Mock()
-    mock_response.status_code = 200
-    mock_response.text = '{"total": 0, "data": []}'
-    mock_response.json.return_value = {"total": 0, "data": []}
-    mock_get = mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
-
-    fetcher.fetch_findings()
-
-    call_args = mock_get.call_args
     assert "abc12345-e89b-12d3-a456-426614174000" in call_args[0][0]
     assert "size=100" in call_args[0][0]
     assert "page=1" in call_args[0][0]

@@ -35,7 +35,7 @@ class ActionInputs:
     """
 
     @staticmethod
-    def get_aquasec_key() -> str:
+    def _get_aquasec_key() -> str:
         """
         Getter of the Aqua Security key.
 
@@ -45,7 +45,7 @@ class ActionInputs:
         return get_action_input(AQUA_KEY)
 
     @staticmethod
-    def get_aquasec_secret() -> str:
+    def _get_aquasec_secret() -> str:
         """
         Getter of the Aqua Security secret.
 
@@ -55,48 +55,14 @@ class ActionInputs:
         return get_action_input(AQUA_SECRET)
 
     @staticmethod
-    def get_repository_id() -> str:
+    def _get_repository_id() -> str:
         """
-        Getter of the AquaSec repository ID.
+        Getter of the repository ID.
 
         Returns:
-            The AquaSec repository ID as a string.
+            The repository ID as a string.
         """
         return get_action_input(REPOSITORY_ID)
-
-    def validate(self):
-        """
-        Validates the action inputs.
-
-        Returns:
-            True if all required inputs are valid, False otherwise.
-        """
-        logger.info("AquaSec Scan Results - Input validation starting.")
-        error_count: int = 0
-        aquasec_key: str = self.get_aquasec_key()
-        aquasec_secret: str = self.get_aquasec_secret()
-        repository_id: str = self.get_repository_id()
-
-        if not aquasec_key or not isinstance(aquasec_key, str):
-            logger.error("AQUASEC_KEY: str - not provided.")
-            error_count += 1
-
-        if not aquasec_secret or not isinstance(aquasec_secret, str):
-            logger.error("AQUASEC_SECRET: str - not provided.")
-            error_count += 1
-
-        if not repository_id or not isinstance(repository_id, str):
-            logger.error("REPOSITORY_ID: str - not provided.")
-            error_count += 1
-        elif not self._is_valid_uuid(repository_id):
-            logger.error("REPOSITORY_ID: str - invalid UUID format.")
-            error_count += 1
-
-        if error_count > 0:
-            return False
-
-        logger.info("AquaSec Scan Results - Input validation successful.")
-        return True
 
     @staticmethod
     def _is_valid_uuid(uuid_string: str) -> bool:
@@ -111,3 +77,40 @@ class ActionInputs:
         """
         uuid_pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
         return bool(re.match(uuid_pattern, uuid_string))
+
+    def validate(self):
+        """
+        Validates the action inputs.
+
+        Returns:
+            True if all required inputs are valid, False otherwise.
+        """
+        logger.info("AquaSec Scan Results - Input validation starting.")
+        error_count: int = 0
+        aquasec_key: str = self._get_aquasec_key()
+        aquasec_secret: str = self._get_aquasec_secret()
+        repository_id: str = self._get_repository_id()
+
+        ## AquaSec Key
+        if not aquasec_key or not isinstance(aquasec_key, str):
+            logger.error("AQUASEC_KEY: str - not provided.")
+            error_count += 1
+
+        ## AquaSec Secret
+        if not aquasec_secret or not isinstance(aquasec_secret, str):
+            logger.error("AQUASEC_SECRET: str - not provided.")
+            error_count += 1
+
+        ## Repository ID
+        if not repository_id or not isinstance(repository_id, str):
+            logger.error("REPOSITORY_ID: str - not provided.")
+            error_count += 1
+        elif not self._is_valid_uuid(repository_id):
+            logger.error("REPOSITORY_ID: str - invalid UUID format.")
+            error_count += 1
+
+        if error_count > 0:
+            return False
+
+        logger.info("AquaSec Scan Results - Input validation successful.")
+        return True

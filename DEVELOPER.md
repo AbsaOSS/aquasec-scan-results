@@ -8,7 +8,6 @@
 - [Run Unit Tests Locally](#run-unit-tests-locally)
 - [Code Coverage](#code-coverage)
 - [Releasing](#releasing)
-- [GitHub Action Usage](#github-action-usage)
 
 ## Project Setup
 
@@ -49,7 +48,7 @@ Set the configuration environment variables in the shell script following the st
 # Essential environment variables for GitHub Action functionality
 export INPUT_AQUA_KEY="your-aquasec-api-key"
 export INPUT_AQUA_SECRET="your-aquasec-api-secret"
-export INPUT_REPOSITORY_ID="your-aquasec-repository-id"  # UUID format: 123e4567-e89b-12d3-a456-426614174000
+export INPUT_REPOSITORY_ID="your-aquasec-repository-id"
 ```
 
 ### Running the script locally
@@ -65,7 +64,7 @@ The whole script should look like this example:
 # Essential environment variables for GitHub Action functionality
 export INPUT_AQUA_KEY="your-aquasec-api-key"
 export INPUT_AQUA_SECRET="your-aquasec-api-secret"
-export INPUT_REPOSITORY_ID="your-aquasec-repository-id"  # UUID format: 123e4567-e89b-12d3-a456-426614174000
+export INPUT_REPOSITORY_ID="your-aquasec-repository-id"
 
 python3 main.py
 ```
@@ -242,84 +241,3 @@ This project uses GitHub Actions for deployment draft creation. The deployment p
 - **Create a new draft release**: The workflow creates a new draft release in the repository.
 - **Finalize the release draft**: Edit the draft release to add a title, description, and any other necessary details related to the GitHub Action.
 - **Publish the release**: Once the draft is ready, publish the release to make it publicly available.
-
----
-## GitHub Action Usage
-
-This GitHub Action fetches security scan results from AquaSec and makes them available for further processing in your workflow.
-
-### Inputs
-
-The action requires the following inputs:
-
-| Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `aqua-key` | AquaSec API Key | Yes | - |
-| `aqua-secret` | AquaSec API Secret | Yes | - |
-| `repository-id` | AquaSec Repository ID (UUID format) | Yes | - |
-| `verbose-logging` | Enable or disable verbose logging | No | `false` |
-
-**Note:** The `repository-id` must be a valid UUID in the format: `123e4567-e89b-12d3-a456-426614174000`
-
-### Outputs
-
-The action provides the following outputs:
-
-| Output | Description |
-|--------|-------------|
-| `scan-findings` | JSON string containing all AquaSec security scan findings with structure: `{"total": <count>, "data": [<findings>]}` |
-
-### Example Usage in Workflow
-
-```yaml
-name: AquaSec Security Scan
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Fetch AquaSec Scan Results
-        id: aquasec-scan
-        uses: AbsaOSS/aquasec-scan-results@v1
-        with:
-          aqua-key: ${{ secrets.AQUA_KEY }}
-          aqua-secret: ${{ secrets.AQUA_SECRET }}
-          repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
-          verbose-logging: 'false'
-
-      - name: Process scan findings
-        run: |
-          echo "Scan findings: ${{ steps.aquasec-scan.outputs.scan-findings }}"
-          # Further processing of findings can be done here
-```
-
-### Functionality
-
-The action performs the following steps:
-
-1. **Authentication**: Authenticates with AquaSec API using the provided API key and secret
-2. **Input Validation**: Validates all required inputs including UUID format for repository-id
-3. **Scan Fetching**: Fetches all security findings from AquaSec with automatic pagination support
-   - Uses page size of 100 items per request
-   - Adds 2-second delay between paginated requests
-   - Continues until all findings are fetched
-4. **Output Generation**: Provides findings as JSON output for consumption by subsequent workflow steps
-
-### Error Handling
-
-The action will fail and exit with status code 1 if:
-- Required inputs are missing or invalid
-- Repository ID is not in valid UUID format
-- Authentication with AquaSec API fails
-- Fetching scan results fails (network errors, API errors, etc.)
-
-All errors are logged with descriptive messages to help with troubleshooting.

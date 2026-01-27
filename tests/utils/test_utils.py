@@ -45,19 +45,41 @@ def test_get_input_without_hyphen(mocker):
 # set_action_output
 
 
-def test_set_action_output_writes_to_file(mocker, tmp_path):
-    output_file = tmp_path / "github_output.txt"
-    mocker.patch("os.getenv", return_value=str(output_file))
+def test_set_output_default(mocker):
+    mocker.patch("os.getenv", return_value="default_output.txt")
+    mock_open = mocker.patch("builtins.open", new_callable=mocker.mock_open)
 
-    set_action_output("test-output", "test-value")
+    set_action_output("test-output", "test_value")
 
-    assert output_file.read_text() == "test-output=test-value\n"
+    mock_open.assert_called_with("default_output.txt", "a", encoding="utf-8")
+    handle = mock_open()
+    handle.write.assert_any_call("test-output=test_value\n")
 
 
-def test_set_action_output_logs_warning_when_github_output_not_set(mocker):
-    mocker.patch("os.getenv", return_value=None)
-    mock_logger = mocker.patch("src.utils.utils.logger")
+def test_set_output_custom_path(mocker):
+    mocker.patch("os.getenv", return_value="custom_output.txt")
+    mock_open = mocker.patch("builtins.open", new_callable=mocker.mock_open)
 
-    set_action_output("test-output", "test-value")
+    set_action_output("custom-output", "custom_value", "default_output.txt")
 
-    mock_logger.warning.assert_called_once()
+    mock_open.assert_called_with("custom_output.txt", "a", encoding="utf-8")
+    handle = mock_open()
+    handle.write.assert_any_call("custom-output=custom_value\n")
+
+
+def test_set_action_output_ioerror(mocker):
+    mocker.patch("os.getenv", return_value="fail.txt")
+    mock_open = mocker.patch("builtins.open", side_effect=IOError("disk full"))
+    mock_logger = mocker.patch("src.utils.utils.logger.error")
+    mock_exit = mocker.patch("sys.exit")
+
+    set_action_output("fail-output", "fail-value", "fail.txt")
+
+    mock_open.assert_called_once_with("fail.txt", "a", encoding="utf-8")
+    mock_logger.assert_called_once()
+    mock_exit.assert_called_once_with(1)
+    args = mock_logger.call_args[0]
+    assert args[0] == "Failed to write output to %s: %s"
+    assert args[1] == "fail.txt"
+    assert isinstance(args[2], IOError)
+    assert "disk full" in str(args[2])

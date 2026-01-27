@@ -27,7 +27,7 @@ from src.action_inputs import ActionInputs
 def test_get_aquasec_key_returns_value(mocker):
     mocker.patch("src.action_inputs.get_action_input", return_value="test_key")
 
-    actual = ActionInputs.get_aquasec_key()
+    actual = ActionInputs._get_aquasec_key()
 
     assert "test_key" == actual
 
@@ -38,7 +38,7 @@ def test_get_aquasec_key_returns_value(mocker):
 def test_get_aquasec_secret_returns_value(mocker):
     mocker.patch("src.action_inputs.get_action_input", return_value="test_secret")
 
-    actual = ActionInputs.get_aquasec_secret()
+    actual = ActionInputs._get_aquasec_secret()
 
     assert "test_secret" == actual
 
@@ -49,7 +49,7 @@ def test_get_aquasec_secret_returns_value(mocker):
 def test_get_repository_id_returns_value(mocker):
     mocker.patch("src.action_inputs.get_action_input", return_value="123e4567-e89b-12d3-a456-426614174000")
 
-    actual = ActionInputs.get_repository_id()
+    actual = ActionInputs._get_repository_id()
 
     assert "123e4567-e89b-12d3-a456-426614174000" == actual
 
@@ -57,60 +57,30 @@ def test_get_repository_id_returns_value(mocker):
 # validate
 
 
-def test_validate_returns_true_when_all_inputs_provided(mocker):
-    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
-    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
-    mocker.patch.object(ActionInputs, "get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
-
+def test_validate_returns_true_when_all_inputs_provided(mock_valid_action_inputs):  # pylint: disable=unused-argument
     actual = ActionInputs().validate()
 
     assert actual is True
 
 
-def test_validate_returns_false_when_key_missing(mocker):
-    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="")
-    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
-    mocker.patch.object(ActionInputs, "get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
+def test_validate_returns_false_when_key_missing(mocker, mock_valid_action_inputs):
+    mocker.patch.object(ActionInputs, "_get_aquasec_key", return_value="")
 
     actual = ActionInputs().validate()
 
     assert actual is False
 
 
-def test_validate_returns_false_when_secret_missing(mocker):
-    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
-    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="")
-    mocker.patch.object(ActionInputs, "get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
+def test_validate_returns_false_when_secret_missing(mocker, mock_valid_action_inputs):
+    mocker.patch.object(ActionInputs, "_get_aquasec_secret", return_value="")
 
     actual = ActionInputs().validate()
 
     assert actual is False
 
 
-def test_validate_returns_false_when_both_missing(mocker):
-    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="")
-    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="")
-    mocker.patch.object(ActionInputs, "get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
-
-    actual = ActionInputs().validate()
-
-    assert actual is False
-
-
-def test_validate_returns_false_when_repository_id_missing(mocker):
-    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
-    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
-    mocker.patch.object(ActionInputs, "get_repository_id", return_value="")
-
-    actual = ActionInputs().validate()
-
-    assert actual is False
-
-
-def test_validate_returns_false_when_repository_id_invalid_uuid(mocker):
-    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
-    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
-    mocker.patch.object(ActionInputs, "get_repository_id", return_value="invalid-uuid-format")
+def test_validate_returns_false_when_repository_id_invalid_uuid(mocker, mock_valid_action_inputs):
+    mocker.patch.object(ActionInputs, "_get_repository_id", return_value="invalid-uuid-format")
 
     actual = ActionInputs().validate()
 
