@@ -21,12 +21,9 @@ inputs:
     default: 'false'
 
 outputs:
-  scan-findings:
-    description: 'JSON containing all AquaSec security scan findings'
-    value: ${{ steps.aquasec-scan-results.outputs.scan_findings }}
-  sarif-file:
+  aquasec_sarif_file:
     description: 'Path to the generated SARIF file'
-    value: ${{ steps.aquasec-scan-results.outputs.sarif_file }}
+    value: ${{ steps.aquasec-scan-results.outputs.aquasec_sarif_file }}
 
 runs:
   using: 'composite'

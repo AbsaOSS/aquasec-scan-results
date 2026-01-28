@@ -18,7 +18,7 @@
 Tests for project utils methods.
 """
 
-from src.utils.utils import get_action_input, set_action_output
+from src.utils.utils import get_action_input, get_sarif_output_filename, set_action_output
 
 
 # get_action_input
@@ -40,6 +40,20 @@ def test_get_input_without_hyphen(mocker):
 
     mock_getenv.assert_called_with("INPUT_ANOTHERINPUT", default='')
     assert "another_test_value" == actual
+
+
+# get_sarif_output_filename
+
+
+def test_get_sarif_output_filename(mocker):
+    mock_datetime = mocker.patch("src.utils.utils.datetime")
+    mock_now = mocker.MagicMock()
+    mock_now.strftime.return_value = "2026-01-28_15-26"
+    mock_datetime.now.return_value = mock_now
+
+    actual = get_sarif_output_filename()
+
+    assert "aquasec_scan_2026-01-28_15-26.sarif" == actual
 
 
 # set_action_output

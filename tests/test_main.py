@@ -79,3 +79,15 @@ def test_run_exits_when_scan_fetcher_raises_request_exception(mocker, mock_main_
         run()
 
     assert 1 == exc_info.value.code
+
+
+def test_run_exits_when_writing_output_raises_ioerror_exception(mocker, mock_main_setup):
+    mock_fetcher = mocker.patch("main.ScanFetcher")
+    mock_fetcher.return_value.fetch_findings.return_value = {"total": 1, "data": [{"id": 1}]}
+    mocker.patch("main.SarifConvertor.convert_to_sarif", return_value={"version": "2.1.0"})
+    mocker.patch("builtins.open", side_effect=IOError("Disk full"))
+
+    with pytest.raises(SystemExit) as exc_info:
+        run()
+
+    assert 1 == exc_info.value.code

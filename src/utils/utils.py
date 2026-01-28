@@ -21,6 +21,7 @@ This module contains utility functions used across the project.
 import logging
 import os
 import sys
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,17 @@ def get_action_input(name: str, default: str = "") -> str:
         The value of the specified input parameter, or the default value.
     """
     return os.getenv(f'INPUT_{name.replace("-", "_").upper()}', default=default)
+
+
+def get_sarif_output_filename() -> str:
+    """
+    Generate SARIF unique output filename with GH Action run timestamp.
+
+    Returns:
+        SARIF unique filename with .sarif extension.
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    return f"aquasec_scan_{timestamp}.sarif"
 
 
 def set_action_output(name: str, value: str, default_output_path: str = "default_output.txt") -> None:
