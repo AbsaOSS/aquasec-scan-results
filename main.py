@@ -26,7 +26,9 @@ from requests.exceptions import RequestException
 
 from src.action_inputs import ActionInputs
 from src.model.authenticator import AquaSecAuthenticator
+from src.model.convertor import Convertor
 from src.model.scan_fetcher import ScanFetcher
+from src.utils.constants import SARIF_OUTPUT_FILE
 from src.utils.logging_config import setup_logging
 from src.utils.utils import set_action_output
 
@@ -57,6 +59,20 @@ def run() -> None:
         sys.exit(1)
 
     set_action_output("scan_findings", json.dumps(findings))
+
+    # Convert findings to SARIF format
+    sarif_data = Convertor(findings).convert_to_sarif()
+
+    # Write SARIF file
+    try:
+        with open(SARIF_OUTPUT_FILE, "w", encoding="utf-8") as sarif_file:
+            json.dump(sarif_data, sarif_file, indent=2)
+        logger.info("AquaSec Scan Results - SARIF file written to %s", SARIF_OUTPUT_FILE)
+    except IOError as e:
+        logger.exception("Failed to write SARIF file: %s", str(e))
+        sys.exit(1)
+
+    set_action_output("sarif_file", SARIF_OUTPUT_FILE)
 
     logger.info("AquaSec Scan Results - Finished.")
 
