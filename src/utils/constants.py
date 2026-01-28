@@ -32,3 +32,14 @@ HTTP_TIMEOUT = 30
 SCAN_API_URL = "https://eu-1.codesec.aquasec.com/api/v1/scans/results"
 PAGE_SIZE = 100
 FETCH_SLEEP_SECONDS = 2
+
+# SARIF related constants
+SARIF_SCHEMA_URL = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+SARIF_VERSION = "2.1.0"
+SARIF_OUTPUT_FILE = "aquasec_scan.sarif"
+
+# SARIF field truncation limits
+SARIF_RULE_ID_MAX = 512
+SARIF_SHORT_DESC_MAX = 1024
+SARIF_FULL_DESC_MAX = 4096
+SARIF_MESSAGE_MAX = 4096
