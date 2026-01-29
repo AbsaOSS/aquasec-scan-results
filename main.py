@@ -67,7 +67,7 @@ def run() -> None:
         output_filename = get_sarif_output_filename()
         with open(output_filename, "w", encoding="utf-8") as sarif_file:
             json.dump(sarif_data, sarif_file, indent=2)
-        logger.info("AquaSec Scan Results - SARIF output file written to `%s`.", output_filename)
+        logger.info("AquaSec Scan Results - SARIF output file saved in `%s`.", output_filename)
     except IOError as e:
         logger.exception("Failed to convert and write SARIF file: %s", str(e))
         sys.exit(1)

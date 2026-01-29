@@ -207,12 +207,12 @@ pytest tests/
 
 Run a single test file:
 ```shell
-pytest tests/test_convertor.py -q
+pytest tests/test_sarif_convertor.py -q
 ```
 
 Run a single test function (node id):
 ```shell
-pytest tests/test_convertor.py::test_load_the_sarif_schema.py -q
+pytest tests/test_sarif_convertor.py::test_convert_to_sarif_returns_valid_structure -q
 ```
 
 ---

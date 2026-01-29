@@ -28,6 +28,7 @@ Patterns
 - Use private methods (`_method_name`) for internal class helpers
 - ActionInputs class validates only, use `get_action_input()` from utils to get inputs elsewhere
 - All info logs must start with "AquaSec Scan Results -" prefix
+- Never disable pylint behaviour in the code
 
 Testing
 - Mirror src structure: `src/module.py` -> `tests/test_module.py`
@@ -36,7 +37,7 @@ Testing
 - Use conftest.py fixtures for repeated mocking patterns across tests
 - Comment sections: `# method_name` before tests
 - Use `mocker.patch("module.dependency")` or `mocker.patch.object(Class, "method")`
-- Use `monkeypatch.setenv("VAR", "value")` for environment variables
+- Use `monkeypatch.setenv("VAR", "value")` for cleaning up environment variables
 - Assert pattern: `assert expected == actual`
 - Use `pytest.raises(Exception)` for exceptions
 
