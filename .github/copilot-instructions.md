@@ -9,7 +9,7 @@ Structure
 - Constants: `src/utils/constants.py`
 
 Inputs (via environment variables with INPUT_ prefix)
-- AQUA_KEY, AQUA_SECRET, REPOSITORY_ID (required)
+- AQUA_KEY, AQUA_SECRET, GROUP_ID, REPOSITORY_ID (required)
 - VERBOSE_LOGGING (optional, default false)
 
 Python style

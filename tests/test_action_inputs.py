@@ -43,6 +43,17 @@ def test_get_aquasec_secret_returns_value(mocker):
     assert "test_secret" == actual
 
 
+# get_group_id
+
+
+def test_get_group_id_returns_value(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="1234")
+
+    actual = ActionInputs._get_group_id()
+
+    assert "1234" == actual
+
+
 # get_repository_id
 
 
@@ -52,7 +63,6 @@ def test_get_repository_id_returns_value(mocker):
     actual = ActionInputs._get_repository_id()
 
     assert "123e4567-e89b-12d3-a456-426614174000" == actual
-
 
 # validate
 
@@ -73,6 +83,14 @@ def test_validate_returns_false_when_key_missing(mocker, mock_valid_action_input
 
 def test_validate_returns_false_when_secret_missing(mocker, mock_valid_action_inputs):
     mocker.patch.object(ActionInputs, "_get_aquasec_secret", return_value="")
+
+    actual = ActionInputs().validate()
+
+    assert actual is False
+
+
+def test_validate_returns_false_when_group_id_missing(mocker, mock_valid_action_inputs):
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="")
 
     actual = ActionInputs().validate()
 

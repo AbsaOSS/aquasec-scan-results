@@ -45,10 +45,12 @@ Add the shebang line at the top of the sh script file.
 Set the configuration environment variables in the shell script following the structure below.
 
 ```shell
-# Essential environment variables for GitHub Action functionality
+# Environment variables for GitHub Action full functionality
 export INPUT_AQUA_KEY="your-aquasec-api-key"
 export INPUT_AQUA_SECRET="your-aquasec-api-secret"
+export INPUT_GROUP_ID="1234"
 export INPUT_REPOSITORY_ID="your-aquasec-repository-id"
+export INPUT_VERBOSE_LOGGING="true"  # Optional
 ```
 
 ### Running the script locally
@@ -61,10 +63,12 @@ The whole script should look like this example:
 ```shell
 #!/bin/sh
 
-# Essential environment variables for GitHub Action functionality
+# Environment variables for GitHub Action full functionality
 export INPUT_AQUA_KEY="your-aquasec-api-key"
 export INPUT_AQUA_SECRET="your-aquasec-api-secret"
+export INPUT_GROUP_ID="1234"
 export INPUT_REPOSITORY_ID="your-aquasec-repository-id"
+export INPUT_VERBOSE_LOGGING="true"  # Optional
 
 python3 main.py
 ```

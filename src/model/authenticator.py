@@ -40,6 +40,7 @@ class AquaSecAuthenticator:
     def __init__(self) -> None:
         self.api_key: str = ""
         self.api_secret: str = ""
+        self.group_id: int = 0
 
     def _generate_signature(self, string_to_sign: str) -> str:
         """
@@ -72,11 +73,12 @@ class AquaSecAuthenticator:
 
         self.api_key = get_action_input(AQUA_KEY)
         self.api_secret = get_action_input(AQUA_SECRET)
-        method: str = "POST"
+        self.group_id = int(get_action_input(GROUP_ID))
         timestamp: int = int(time.time())
+        method: str = "POST"
         auth_endpoint: str = AUTH_API_URL + "/v2/tokens"
         post_body: str = json.dumps(
-            {"group_id": GROUP_ID, "allowed_endpoints": ["GET"], "validity": 240}, separators=(",", ":")
+            {"group_id": self.group_id, "allowed_endpoints": ["GET"], "validity": 240}, separators=(",", ":")
         )
         string_to_sign: str = f"{timestamp}{method}/v2/tokens{post_body}"
 
