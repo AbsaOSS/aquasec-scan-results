@@ -21,7 +21,7 @@ the inputs required for running a GitHub Action from environment variables.
 
 import logging
 
-from src.utils.constants import AQUA_KEY, AQUA_SECRET
+from src.utils.constants import AQUA_KEY, AQUA_SECRET, GROUP_ID
 from src.utils.utils import get_action_input
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,16 @@ class ActionInputs:
         """
         return get_action_input(AQUA_SECRET)
 
+    @staticmethod
+    def get_group_id() -> str:
+        """
+        Getter of the AquaSec Group ID for authentication.
+
+        Returns:
+            The Group ID as a string.
+        """
+        return get_action_input(GROUP_ID)
+
     def validate(self):
         """
         Validates the action inputs.
@@ -64,6 +74,7 @@ class ActionInputs:
         error_count: int = 0
         aquasec_key: str = self.get_aquasec_key()
         aquasec_secret: str = self.get_aquasec_secret()
+        group_id: str = self.get_group_id()
 
         if not aquasec_key or not isinstance(aquasec_key, str):
             logger.error("AQUASEC_KEY: str - not provided.")
@@ -71,6 +82,10 @@ class ActionInputs:
 
         if not aquasec_secret or not isinstance(aquasec_secret, str):
             logger.error("AQUASEC_SECRET: str - not provided.")
+            error_count += 1
+
+        if not group_id or not isinstance(group_id, str):
+            logger.error("GROUP_ID: str - not provided.")
             error_count += 1
 
         if error_count > 0:

@@ -43,12 +43,24 @@ def test_get_aquasec_secret_returns_value(mocker):
     assert "test_secret" == actual
 
 
+# get_group_id
+
+
+def test_get_group_id_returns_value(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="1234")
+
+    actual = ActionInputs.get_group_id()
+
+    assert "1234" == actual
+
+
 # validate
 
 
 def test_validate_returns_true_when_all_inputs_provided(mocker):
     mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
     mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
 
     actual = ActionInputs().validate()
 
@@ -58,6 +70,8 @@ def test_validate_returns_true_when_all_inputs_provided(mocker):
 def test_validate_returns_false_when_key_missing(mocker):
     mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="")
     mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
+
 
     actual = ActionInputs().validate()
 
@@ -67,15 +81,27 @@ def test_validate_returns_false_when_key_missing(mocker):
 def test_validate_returns_false_when_secret_missing(mocker):
     mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
     mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
 
     actual = ActionInputs().validate()
 
     assert actual is False
 
 
-def test_validate_returns_false_when_both_missing(mocker):
+def test_validate_returns_false_when_group_id_missing(mocker):
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="")
+
+    actual = ActionInputs().validate()
+
+    assert actual is False
+
+
+def test_validate_returns_false_when_all_missing(mocker):
     mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="")
     mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="")
 
     actual = ActionInputs().validate()
 
