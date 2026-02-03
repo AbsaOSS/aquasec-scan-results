@@ -40,6 +40,7 @@ def mock_valid_action_inputs(mocker):
     """Common setup for ActionInputs validation tests with valid inputs."""
     mocker.patch.object(ActionInputs, "_get_aquasec_key", return_value="valid_key")
     mocker.patch.object(ActionInputs, "_get_aquasec_secret", return_value="valid_secret")
+    mocker.patch.object(ActionInputs, "_get_group_id", return_value="1234")
     mocker.patch.object(ActionInputs, "_get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
 
 

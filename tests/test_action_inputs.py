@@ -64,6 +64,7 @@ def test_get_repository_id_returns_value(mocker):
 
     assert "123e4567-e89b-12d3-a456-426614174000" == actual
 
+
 # validate
 
 
@@ -90,7 +91,7 @@ def test_validate_returns_false_when_secret_missing(mocker, mock_valid_action_in
 
 
 def test_validate_returns_false_when_group_id_missing(mocker, mock_valid_action_inputs):
-    mocker.patch.object(ActionInputs, "get_group_id", return_value="")
+    mocker.patch.object(ActionInputs, "_get_group_id", return_value="")
 
     actual = ActionInputs().validate()
 
