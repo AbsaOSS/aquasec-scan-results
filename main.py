@@ -56,7 +56,7 @@ def run() -> None:
         logger.exception("Fetching scan results failed: %s", str(e))
         sys.exit(1)
 
-    set_action_output("scan_findings", json.dumps(findings))
+    set_action_output("scan-findings", json.dumps(findings))
 
     logger.info("AquaSec Scan Results - Finished.")
 

@@ -56,12 +56,12 @@ class ScanFetcher:
         page_num = 1
         total_expected = 0
         self.repository_id = get_action_input(REPOSITORY_ID)
+        headers = {"Authorization": f"Bearer {self.bearer_token}", "Accept": "application/json"}
 
         while True:
             logger.info("AquaSec Scan Results - Fetching page %d...", page_num)
 
             fetch_endpoint = f"{SCAN_API_URL}?repositoryIds={self.repository_id}&size={PAGE_SIZE}&page={page_num}"
-            headers = {"Authorization": f"Bearer {self.bearer_token}", "Accept": "application/json"}
 
             # Make scan fetching API request
             response = requests.get(fetch_endpoint, headers=headers, timeout=HTTP_TIMEOUT)

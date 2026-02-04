@@ -29,9 +29,14 @@ from main import run
 
 def test_run_successful(mocker, mock_main_setup):
     mock_fetcher = mocker.patch("main.ScanFetcher")
-    mock_fetcher.return_value.fetch_findings.return_value = {"total": 2, "data": [{"id": 1}, {"id": 2}]}
+    findings_data = {"total": 2, "data": [{"id": 1}, {"id": 2}]}
+    mock_fetcher.return_value.fetch_findings.return_value = findings_data
+    mock_set_output = mocker.patch("main.set_action_output")
 
     run()
+
+    mock_set_output.assert_called_once()
+    assert "scan-findings" in str(mock_set_output.call_args)
 
 
 def test_run_exits_when_validation_fails(mocker):

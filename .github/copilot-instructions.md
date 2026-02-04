@@ -39,6 +39,7 @@ Testing
 - Use `monkeypatch.setenv("VAR", "value")` for environment variables
 - Assert pattern: `assert expected == actual`
 - Use `pytest.raises(Exception)` for exceptions
+- Use `@pytest.mark.parametrize` for data-driven tests (negative/failure scenarios with multiple similar cases)
 
 Quality gates (run after changes, fix only if below threshold)
 - black .
