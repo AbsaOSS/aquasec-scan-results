@@ -20,8 +20,9 @@ the inputs required for running a GitHub Action from environment variables.
 """
 
 import logging
+import re
 
-from src.utils.constants import AQUA_KEY, AQUA_SECRET, GROUP_ID
+from src.utils.constants import AQUA_KEY, AQUA_SECRET, GROUP_ID, REPOSITORY_ID
 from src.utils.utils import get_action_input
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class ActionInputs:
     """
 
     @staticmethod
-    def get_aquasec_key() -> str:
+    def _get_aquasec_key() -> str:
         """
         Getter of the Aqua Security key.
 
@@ -44,7 +45,7 @@ class ActionInputs:
         return get_action_input(AQUA_KEY)
 
     @staticmethod
-    def get_aquasec_secret() -> str:
+    def _get_aquasec_secret() -> str:
         """
         Getter of the Aqua Security secret.
 
@@ -54,7 +55,7 @@ class ActionInputs:
         return get_action_input(AQUA_SECRET)
 
     @staticmethod
-    def get_group_id() -> str:
+    def _get_group_id() -> str:
         """
         Getter of the AquaSec Group ID for authentication.
 
@@ -62,6 +63,30 @@ class ActionInputs:
             The Group ID as a string.
         """
         return get_action_input(GROUP_ID)
+
+    @staticmethod
+    def _get_repository_id() -> str:
+        """
+        Getter of the repository ID.
+
+        Returns:
+            The repository ID as a string.
+        """
+        return get_action_input(REPOSITORY_ID)
+
+    @staticmethod
+    def _is_valid_uuid(uuid_string: str) -> bool:
+        """
+        Validates if the given string is a valid UUID format.
+
+        Args:
+            uuid_string: The string to validate as UUID.
+
+        Returns:
+            True if the string is a valid UUID, False otherwise.
+        """
+        uuid_pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        return bool(re.match(uuid_pattern, uuid_string))
 
     def validate(self):
         """
@@ -72,20 +97,32 @@ class ActionInputs:
         """
         logger.info("AquaSec Scan Results - Input validation starting.")
         error_count: int = 0
-        aquasec_key: str = self.get_aquasec_key()
-        aquasec_secret: str = self.get_aquasec_secret()
-        group_id: str = self.get_group_id()
+        aquasec_key: str = self._get_aquasec_key()
+        aquasec_secret: str = self._get_aquasec_secret()
+        group_id: str = self._get_group_id()
+        repository_id: str = self._get_repository_id()
 
+        ## AquaSec Key
         if not aquasec_key or not isinstance(aquasec_key, str):
             logger.error("AQUASEC_KEY: str - not provided.")
             error_count += 1
 
+        ## AquaSec Secret
         if not aquasec_secret or not isinstance(aquasec_secret, str):
             logger.error("AQUASEC_SECRET: str - not provided.")
             error_count += 1
 
+        ## Group ID
         if not group_id or not isinstance(group_id, str):
             logger.error("GROUP_ID: str - not provided.")
+            error_count += 1
+
+        ## Repository ID
+        if not repository_id or not isinstance(repository_id, str):
+            logger.error("REPOSITORY_ID: str - not provided.")
+            error_count += 1
+        elif not self._is_valid_uuid(repository_id):
+            logger.error("REPOSITORY_ID: str - invalid UUID format.")
             error_count += 1
 
         if error_count > 0:

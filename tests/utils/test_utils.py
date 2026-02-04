@@ -18,7 +18,7 @@
 Tests for project utils methods.
 """
 
-from src.utils.utils import get_action_input
+from src.utils.utils import get_action_input, set_action_output, set_action_failed
 
 
 # get_action_input
@@ -40,3 +40,46 @@ def test_get_input_without_hyphen(mocker):
 
     mock_getenv.assert_called_with("INPUT_ANOTHERINPUT", default='')
     assert "another_test_value" == actual
+
+
+# set_action_output
+
+
+def test_set_output_default(mocker):
+    mocker.patch("os.getenv", return_value="default_output.txt")
+    mock_open = mocker.patch("builtins.open", new_callable=mocker.mock_open)
+    multiline_value = "line1\nline2\nline3"
+
+    set_action_output("test-output", multiline_value)
+
+    mock_open.assert_called_with("default_output.txt", "a", encoding="utf-8")
+    handle = mock_open()
+    handle.write.assert_any_call("test-output<<EOF\n")
+    handle.write.assert_any_call("line1\nline2\nline3\n")
+    handle.write.assert_any_call("EOF\n")
+
+
+def test_set_output_custom_path(mocker):
+    mocker.patch("os.getenv", return_value="custom_output.txt")
+    mock_open = mocker.patch("builtins.open", new_callable=mocker.mock_open)
+
+    set_action_output("custom-output", "custom_value", "default_output.txt")
+
+    mock_open.assert_called_with("custom_output.txt", "a", encoding="utf-8")
+    handle = mock_open()
+    handle.write.assert_any_call("custom-output<<EOF\n")
+    handle.write.assert_any_call("custom_value\n")
+    handle.write.assert_any_call("EOF\n")
+
+
+# set_action_failed
+
+
+def test_set_failed(mocker):
+    mock_print = mocker.patch("builtins.print", return_value=None)
+    mock_exit = mocker.patch("sys.exit", return_value=None)
+
+    set_action_failed("failure message")
+
+    mock_print.assert_called_with("::error::failure message")
+    mock_exit.assert_called_with(1)
