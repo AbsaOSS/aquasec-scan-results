@@ -36,7 +36,7 @@ def test_run_successful(mocker, mock_main_setup):
     run()
 
     mock_set_output.assert_called_once()
-    assert "scan-findings" in str(mock_set_output.call_args)
+    assert "aquasec-sarif-file" in str(mock_set_output.call_args)
 
 
 def test_run_exits_when_validation_fails(mocker):
