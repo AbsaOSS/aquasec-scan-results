@@ -72,7 +72,7 @@ def run() -> None:
         logger.exception("Failed to convert and write SARIF file: %s", str(e))
         sys.exit(1)
 
-    set_action_output("aquasec_sarif_file", output_filename)
+    set_action_output("aquasec-sarif-file", output_filename)
 
     logger.info("AquaSec Scan Results - Finished.")
 

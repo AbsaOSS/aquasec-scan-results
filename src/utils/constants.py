@@ -21,11 +21,11 @@ This module centralises all constants used across the project.
 # General Action inputs
 AQUA_KEY = "AQUA_KEY"
 AQUA_SECRET = "AQUA_SECRET"
+GROUP_ID = "GROUP_ID"
 REPOSITORY_ID = "REPOSITORY_ID"
 
 # Authentication
 AUTH_API_URL = "https://eu-1.api.cloudsploit.com"
-GROUP_ID = 1228
 HTTP_TIMEOUT = 30
 
 # Scan fetching
