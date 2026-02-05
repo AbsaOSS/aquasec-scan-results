@@ -93,13 +93,6 @@ def test_set_action_output_ioerror(mocker):
     assert "Failed to write output to" in str(mock_logger.call_args)
 
 
-def test_set_action_output_ioerror(mocker):
-    mocker.patch("os.getenv", return_value="fail.txt")
-    mock_open = mocker.patch("builtins.open", side_effect=IOError("disk full"))
-    mock_logger = mocker.patch("src.utils.utils.logger.exception")
-    mock_exit = mocker.patch("sys.exit")
-
-
 # set_action_failed
 
 
