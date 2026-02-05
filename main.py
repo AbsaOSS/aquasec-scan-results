@@ -61,7 +61,7 @@ def run() -> None:
         sys.exit(1)
 
     # Converting findings to SARIF format
-    sarif_data = SarifConvertor(findings_json).convert_to_sarif()
+    sarif_data = SarifConvertor().convert_to_sarif(findings_json)
 
     try:
         output_filename = get_sarif_output_filename()
