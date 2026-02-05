@@ -33,11 +33,11 @@ To run this action successfully, make sure your environment meets the following 
 Create a workflow file (e.g., `.github/workflows/aquasec-security-scan.yml`) to run daily at 10:00 AM UTC:
 
 ```yaml
-name: AquaSec Security Night Scan
+name: AquaSec Night Scan
 
 on:
   schedule:
-    - cron: '0 11 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
     
 concurrency:
@@ -52,8 +52,11 @@ jobs:
   aquasec-night-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          persist-credentials: false
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
