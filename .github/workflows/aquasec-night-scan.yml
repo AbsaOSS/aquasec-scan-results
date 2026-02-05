@@ -1,0 +1,45 @@
+name: AquaSec Night Scan
+
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: aquasec-night-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  aquasec-night-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: '3.14'
+
+      - name: Fetch AquaSec Scan Results
+        id: aquasec
+        uses: AbsaOSS/aquasec-scan-results@master
+        with:
+          aqua-key: ${{ secrets.AQUA_KEY }}
+          aqua-secret: ${{ secrets.AQUA_SECRET }}
+          group-id: ${{ secrets.AQUA_GROUP_ID }}
+          repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
+          verbose-logging: 'false'
+
+      - name: Upload Scan Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4e94bd11f71e507f7f87df81788dff88d1dacbfb
+        with:
+          sarif_file: ${{ steps.aquasec.outputs.aquasec-sarif-file }}
+          category: aquasec
