@@ -32,14 +32,18 @@ from src.utils.constants import (
 
 logger = logging.getLogger(__name__)
 
+# Type aliases
+Finding = dict[str, Any]
+FindingsList = list[Finding]
+
 
 class SarifConvertor:
     """
     Class to convert AquaSec scan findings to SARIF 2.1.0 format.
     """
 
-    def __init__(self, findings: dict) -> None:
-        self.findings = findings
+    def __init__(self) -> None:
+        self.findings_json: FindingsList = []
 
     # Text utility
     @staticmethod
@@ -104,33 +108,34 @@ class SarifConvertor:
         severity_map = {4: "CRITICAL", 3: "HIGH", 2: "MEDIUM", 1: "LOW"}
         return severity_map.get(severity, "UNKNOWN")
 
-    def _build_rule(self, finding: dict) -> dict:
+    def _build_rule(self, finding_json: Finding) -> dict:
         """
         Build a SARIF rule object from an AquaSec finding.
 
+
         Args:
-            finding: AquaSec finding dictionary.
+            finding_json: AquaSec finding dictionary.
 
         Returns:
             SARIF rule dictionary.
         """
-        rule_id = finding.get("avd_id", SARIF_PLACEHOLDER)
+        rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
         rule_id = self._truncate_text(rule_id, RULE_ID_MAX_LENGTH)
         logger.debug("Building a new security rule in SARIF format (rule id: %s).", rule_id)
 
-        title = finding.get("title", SARIF_PLACEHOLDER)
+        title = finding_json.get("title", SARIF_PLACEHOLDER)
         short_desc = self._truncate_text(title, TITLE_MAX_LENGTH)
 
-        message = finding.get("message", SARIF_PLACEHOLDER)
+        message = finding_json.get("message", SARIF_PLACEHOLDER)
         full_desc = self._truncate_text(str(message), LONG_TEXT_MAX_LENGTH)
 
-        severity = finding.get("severity", 1)
+        severity = finding_json.get("severity", 1)
         level = self._map_severity_to_level(severity)
         security_severity = self._map_severity_to_score(severity)
         severity_tag = self._get_severity_tag(severity)
-        category = finding.get("category", SARIF_PLACEHOLDER)
+        category = finding_json.get("category", SARIF_PLACEHOLDER)
 
-        extra_data = finding.get("extraData", {})
+        extra_data = finding_json.get("extraData", {})
         references = extra_data.get("references", [])
         cwe = extra_data.get("cwe", "")
         remediation = extra_data.get("remediation", "")
@@ -170,7 +175,7 @@ class SarifConvertor:
 
         return rule
 
-    def _build_sarif_finding(self, finding_json: dict, rule_index: int) -> dict:
+    def _build_sarif_finding(self, finding_json: Finding, rule_index: int) -> dict:
         """
         Build a SARIF finding object from an AquaSec finding.
 
@@ -255,27 +260,29 @@ class SarifConvertor:
 
         return finding
 
-    def convert_to_sarif(self) -> dict:
+    def convert_to_sarif(self, findings_json: dict) -> dict:
         """
         Convert AquaSec findings to SARIF 2.1.0 format.
 
+        Args:
+            findings_json: Dictionary containing AquaSec scan findings in JSON format.
         Returns:
             SARIF dictionary.
         """
         logger.info("AquaSec Scan Results - SARIF conversion starting.")
 
-        findings_data = self.findings.get("data", [])
+        self.findings_json = findings_json.get("data", [])
 
         # Build unique security rules and track their indices
         rules_dict: dict[str, dict] = {}
         rule_indexes: dict[str, int] = {}
 
-        for finding in findings_data:
-            rule_id = finding.get("avd_id", SARIF_PLACEHOLDER)
+        for finding_json in self.findings_json:
+            rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
             rule_id = self._truncate_text(str(rule_id), RULE_ID_MAX_LENGTH)
 
             if rule_id not in rules_dict:
-                rules_dict[rule_id] = self._build_rule(finding)
+                rules_dict[rule_id] = self._build_rule(finding_json)
                 rule_indexes[rule_id] = len(rules_dict) - 1
 
         # SARIF output has to be JSON serializable
@@ -283,11 +290,11 @@ class SarifConvertor:
 
         # Build result findings output
         findings = []
-        for finding in findings_data:
-            rule_id = finding.get("avd_id", SARIF_PLACEHOLDER)
+        for finding_json in self.findings_json:
+            rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
             rule_id = self._truncate_text(str(rule_id), RULE_ID_MAX_LENGTH)
             rule_index = rule_indexes.get(rule_id, 0)
-            findings.append(self._build_sarif_finding(finding, rule_index))
+            findings.append(self._build_sarif_finding(finding_json, rule_index))
 
         # Build SARIF structure
         sarif = {

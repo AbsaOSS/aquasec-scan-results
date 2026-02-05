@@ -42,9 +42,8 @@ def test_convert_to_sarif_returns_valid_structure():
             }
         ],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     assert SARIF_SCHEMA_URL == actual["$schema"]
     assert SARIF_VERSION == actual["version"]
@@ -56,9 +55,8 @@ def test_convert_to_sarif_returns_valid_structure():
 
 def test_convert_to_sarif_handles_empty_findings():
     findings = {"total": 0, "data": []}
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     assert 0 == len(actual["runs"][0]["results"])
     assert 0 == len(actual["runs"][0]["tool"]["driver"]["rules"])
@@ -66,18 +64,16 @@ def test_convert_to_sarif_handles_empty_findings():
 
 def test_convert_to_sarif_maps_severity_null_to_note():
     findings = {"total": 1, "data": [{"avd_id": "test-rule-low"}]}
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     assert "note" == actual["runs"][0]["results"][0]["level"]
 
 
 def test_convert_to_sarif_maps_severity_4_to_error():
     findings = {"total": 1, "data": [{"avd_id": "test-rule-critical", "severity": 4}]}
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     assert "error" == actual["runs"][0]["results"][0]["level"]
 
@@ -85,9 +81,8 @@ def test_convert_to_sarif_maps_severity_4_to_error():
 def test_convert_to_sarif_truncates_short_description():
     long_title = "a" * (TITLE_MAX_LENGTH + 100)
     findings = {"total": 1, "data": [{"avd_id": "test-rule", "title": long_title}]}
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     short_desc = actual["runs"][0]["tool"]["driver"]["rules"][0]["shortDescription"]["text"]
     assert TITLE_MAX_LENGTH == len(short_desc)
@@ -98,9 +93,8 @@ def test_convert_to_sarif_includes_file_location():
         "total": 1,
         "data": [{"avd_id": "test-rule", "target_file": "src/main.py"}],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     locations = actual["runs"][0]["results"][0]["locations"]
     assert 1 == len(locations)
@@ -112,9 +106,8 @@ def test_convert_to_sarif_includes_line_location():
         "total": 1,
         "data": [{"avd_id": "test-rule", "title": "Test", "target_file": "src/main.py", "target_start_line": 42}],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     region = actual["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"]
     assert 42 == region["startLine"]
@@ -133,9 +126,8 @@ def test_convert_to_sarif_includes_line_range():
             }
         ],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     region = actual["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"]
     assert 42 == region["startLine"]
@@ -144,9 +136,8 @@ def test_convert_to_sarif_includes_line_range():
 
 def test_convert_to_sarif_handles_missing_avd_id():
     findings = {"total": 1, "data": [{"title": "Test", "severity": 2}]}
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     assert "Unknown" == actual["runs"][0]["results"][0]["ruleId"]
 
@@ -162,9 +153,8 @@ def test_convert_to_sarif_includes_reference_as_help_uri():
             }
         ],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     assert "https://example.com" == actual["runs"][0]["tool"]["driver"]["rules"][0]["helpUri"]
 
@@ -177,9 +167,8 @@ def test_convert_to_sarif_handles_duplicate_rules():
             {"avd_id": "test-rule", "title": "Test 2", "severity": 2},
         ],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     assert 1 == len(actual["runs"][0]["tool"]["driver"]["rules"])
     assert 2 == len(actual["runs"][0]["results"])
@@ -193,9 +182,8 @@ def test_convert_to_sarif_handles_multiple_different_rules():
             {"avd_id": "rule-2", "title": "Test 2", "severity": 1},
         ],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     assert 2 == len(actual["runs"][0]["tool"]["driver"]["rules"])
     assert 2 == len(actual["runs"][0]["results"])
@@ -203,9 +191,8 @@ def test_convert_to_sarif_handles_multiple_different_rules():
 
 def test_convert_to_sarif_includes_tool_metadata():
     findings = {"total": 0, "data": []}
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     driver = actual["runs"][0]["tool"]["driver"]
     assert "AquaSec" == driver["name"]
@@ -218,9 +205,8 @@ def test_convert_to_sarif_handles_zero_line_number():
         "total": 1,
         "data": [{"avd_id": "test-rule", "title": "Test", "target_file": "src/main.py", "target_start_line": 0}],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     location = actual["runs"][0]["results"][0]["locations"][0]["physicalLocation"]
     assert "region" not in location
@@ -231,9 +217,8 @@ def test_convert_to_sarif_handles_negative_line_number():
         "total": 1,
         "data": [{"avd_id": "test-rule", "title": "Test", "target_file": "src/main.py", "target_start_line": -1}],
     }
-    convertor = SarifConvertor(findings)
 
-    actual = convertor.convert_to_sarif()
+    actual = SarifConvertor().convert_to_sarif(findings)
 
     location = actual["runs"][0]["results"][0]["locations"][0]["physicalLocation"]
     assert "region" not in location
@@ -243,17 +228,13 @@ def test_convert_to_sarif_handles_negative_line_number():
 
 
 def test_truncate_text_returns_original_when_within_limit():
-    convertor = SarifConvertor({"total": 0, "data": []})
-
-    actual = convertor._truncate_text("short text", 100)
+    actual = SarifConvertor._truncate_text("short text", 100)
 
     assert "short text" == actual
 
 
 def test_truncate_text_truncates_when_exceeds_limit():
-    convertor = SarifConvertor({"total": 0, "data": []})
-
-    actual = convertor._truncate_text("long text here", 4)
+    actual = SarifConvertor._truncate_text("long text here", 4)
 
     assert "long" == actual
 
