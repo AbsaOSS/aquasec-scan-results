@@ -12,7 +12,7 @@ jobs:
   dependabot:
     name: Auto-approve and auto-merge Dependabot PRs
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'AbsaOSS/release-notes-presence-check'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'AbsaOSS/aquasec-scan-results'
     steps:
       - name: Dependabot metadata
         id: metadata
