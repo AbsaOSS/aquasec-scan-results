@@ -34,8 +34,8 @@ jobs:
         with:
           aqua-key: ${{ secrets.AQUA_KEY }}
           aqua-secret: ${{ secrets.AQUA_SECRET }}
+          group-id: ${{ secrets.AQUA_GROUP_ID }}
           repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
-          group-id: '1228'
           verbose-logging: 'false'
 
       - name: Upload Scan Results to GitHub Security
