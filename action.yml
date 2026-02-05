@@ -12,18 +12,21 @@ inputs:
   aqua-secret:
     description: 'AquaSec API Secret'
     required: true
+  group-id:
+    description: 'AquaSec Group ID for authentication'
+    required: true
   repository-id:
     description: 'AquaSec Repository ID (UUID format)'
     required: true
   verbose-logging:
-    description: 'Enable or disable verbose logging.'
+    description: 'Enable or disable verbose logging'
     required: false
     default: 'false'
 
 outputs:
-  aquasec_sarif_file:
-    description: 'Path to the generated SARIF file'
-    value: ${{ steps.aquasec-scan-results.outputs.aquasec_sarif_file }}
+  aquasec-sarif-file:
+    description: 'Full path to the generated SARIF file'
+    value: ${{ steps.aquasec-scan-results.outputs.aquasec-sarif-file }}
 
 runs:
   using: 'composite'
@@ -41,6 +44,7 @@ runs:
         echo "INPUT_AQUA_KEY=${{ inputs.aqua-key }}" >> $GITHUB_ENV
         echo "INPUT_AQUA_SECRET=${{ inputs.aqua-secret }}" >> $GITHUB_ENV
         echo "INPUT_REPOSITORY_ID=${{ inputs.repository-id }}" >> $GITHUB_ENV
+        echo "INPUT_GROUP_ID=${{ inputs.group-id }}" >> $GITHUB_ENV
         echo "INPUT_VERBOSE_LOGGING=${{ inputs.verbose-logging }}" >> $GITHUB_ENV
       shell: bash
 
@@ -50,6 +54,7 @@ runs:
         INPUT_AQUA_KEY: ${{ env.INPUT_AQUA_KEY }}
         INPUT_AQUA_SECRET: ${{ env.INPUT_AQUA_SECRET }}
         INPUT_REPOSITORY_ID: ${{ env.INPUT_REPOSITORY_ID }}
+        INPUT_GROUP_ID: ${{ env.INPUT_GROUP_ID }}
         INPUT_VERBOSE_LOGGING: ${{ env.INPUT_VERBOSE_LOGGING }}
       run: |
         export PYTHONPATH="${PYTHONPATH}:${{ github.action_path }}"

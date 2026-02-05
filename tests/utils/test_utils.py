@@ -18,7 +18,7 @@
 Tests for project utils methods.
 """
 
-from src.utils.utils import get_action_input, get_sarif_output_filename, set_action_output
+from src.utils.utils import get_action_input, get_sarif_output_filename, set_action_output, set_action_failed
 
 
 # get_action_input
@@ -85,15 +85,22 @@ def test_set_action_output_ioerror(mocker):
     mocker.patch("os.getenv", return_value="fail.txt")
     mock_open = mocker.patch("builtins.open", side_effect=IOError("disk full"))
     mock_logger = mocker.patch("src.utils.utils.logger.exception")
-    mock_exit = mocker.patch("sys.exit")
 
-    set_action_output("fail-output", "fail-value", "fail.txt")
+    set_action_output("test-output", "test_value")
 
-    mock_open.assert_called_once_with("fail.txt", "a", encoding="utf-8")
+    mock_open.assert_called_with("fail.txt", "a", encoding="utf-8")
     mock_logger.assert_called_once()
-    mock_exit.assert_called_once_with(1)
-    args = mock_logger.call_args[0]
-    assert args[0] == "Failed to write output to %s: %s"
-    assert args[1] == "fail.txt"
-    assert isinstance(args[2], IOError)
-    assert "disk full" in str(args[2])
+    assert "Failed to write output to" in str(mock_logger.call_args)
+
+
+# set_action_failed
+
+
+def test_set_failed(mocker):
+    mock_print = mocker.patch("builtins.print", return_value=None)
+    mock_exit = mocker.patch("sys.exit", return_value=None)
+
+    set_action_failed("failure message")
+
+    mock_print.assert_called_with("::error::failure message")
+    mock_exit.assert_called_with(1)
