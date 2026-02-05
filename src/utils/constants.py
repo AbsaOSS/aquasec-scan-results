@@ -24,11 +24,21 @@ AQUA_SECRET = "AQUA_SECRET"
 GROUP_ID = "GROUP_ID"
 REPOSITORY_ID = "REPOSITORY_ID"
 
-# Authentication related constants
+# Authentication
 AUTH_API_URL = "https://eu-1.api.cloudsploit.com"
 HTTP_TIMEOUT = 30
 
-# Scan fetching related constants
+# Scan fetching
 SCAN_API_URL = "https://eu-1.codesec.aquasec.com/api/v1/scans/results"
 PAGE_SIZE = 100
 FETCH_SLEEP_SECONDS = 2
+
+# SARIF converting
+SARIF_VERSION = "2.1.0"
+SARIF_SCHEMA_URL = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+SARIF_PLACEHOLDER = "Unknown"
+
+# SARIF field truncation limits
+RULE_ID_MAX_LENGTH = 512
+TITLE_MAX_LENGTH = 1024
+LONG_TEXT_MAX_LENGTH = 4096

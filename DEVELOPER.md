@@ -112,7 +112,7 @@ To run Pylint on a specific file, follow the pattern `pylint <path_to_file>/<nam
 
 Example:
 ```shell
-pylint src/convertor.py
+pylint src/model/authenticator.py
 ``` 
 
 ### Expected Output
@@ -152,7 +152,7 @@ To run Black on a specific file, follow the pattern `black <path_to_file>/<name_
 
 Example:
 ```shell
-black src/convertor.py
+black src/model/sarif_convertor.py
 ``` 
 
 ### Expected Output
@@ -189,7 +189,7 @@ To run my[py] check on a specific file, follow the pattern `mypy <path_to_file>/
 
 Example:
 ```shell
-   mypy src/convertor.py
+   mypy src/action_inputs.py
 ``` 
 
 ### Expected Output
@@ -211,12 +211,12 @@ pytest tests/
 
 Run a single test file:
 ```shell
-pytest tests/test_convertor.py -q
+pytest tests/test_main.py -q
 ```
 
 Run a single test function (node id):
 ```shell
-pytest tests/test_convertor.py::test_load_the_sarif_schema.py -q
+pytest tests/test_main.py::test_run_successful -q
 ```
 
 ---

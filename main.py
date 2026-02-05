@@ -20,15 +20,17 @@ This module contains the main script for the AquaSec Scan Results GH Action.
 
 import json
 import logging
+import os
 import sys
 
 from requests.exceptions import RequestException
 
 from src.action_inputs import ActionInputs
 from src.model.authenticator import AquaSecAuthenticator
+from src.model.sarif_convertor import SarifConvertor
 from src.model.scan_fetcher import ScanFetcher
 from src.utils.logging_config import setup_logging
-from src.utils.utils import set_action_output
+from src.utils.utils import get_sarif_output_filename, set_action_output
 
 
 def run() -> None:
@@ -40,23 +42,39 @@ def run() -> None:
 
     logger.info("AquaSec Scan Results - Starting.")
 
+    # Validate inputs
     if not ActionInputs().validate():
         logger.error("AquaSec Scan Results - Input validation failed.")
         sys.exit(1)
 
+    # Authentication
     try:
         bearer_token = AquaSecAuthenticator().authenticate()
     except (ValueError, RequestException) as e:
         logger.exception("Authentication failed: %s", str(e))
         sys.exit(1)
 
+    # Fetching scan results
     try:
-        findings = ScanFetcher(bearer_token).fetch_findings()
+        findings_json = ScanFetcher(bearer_token).fetch_findings()
     except (ValueError, RequestException) as e:
         logger.exception("Fetching scan results failed: %s", str(e))
         sys.exit(1)
 
-    set_action_output("scan-findings", json.dumps(findings))
+    # Converting findings to SARIF format
+    sarif_data = SarifConvertor().convert_to_sarif(findings_json)
+
+    try:
+        output_filename = get_sarif_output_filename()
+        output_filepath = os.path.abspath(output_filename)
+        with open(output_filepath, "w", encoding="utf-8") as sarif_file:
+            json.dump(sarif_data, sarif_file, indent=2)
+        logger.info("AquaSec Scan Results - SARIF output file saved in `%s`.", output_filepath)
+    except IOError as e:
+        logger.exception("Failed to convert and write SARIF file: %s", str(e))
+        sys.exit(1)
+
+    set_action_output("aquasec-sarif-file", output_filepath)
 
     logger.info("AquaSec Scan Results - Finished.")
 

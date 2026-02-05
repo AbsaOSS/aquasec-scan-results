@@ -21,6 +21,7 @@ This module contains utility functions used across the project.
 import logging
 import os
 import sys
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,17 @@ def get_action_input(name: str, default: str = "") -> str:
     return os.getenv(f'INPUT_{name.replace("-", "_").upper()}', default=default)
 
 
+def get_sarif_output_filename() -> str:
+    """
+    Generate SARIF unique output filename with GH Action run timestamp.
+
+    Returns:
+        SARIF unique filename with .sarif extension.
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    return f"aquasec_scan_{timestamp}.sarif"
+
+
 def set_action_output(name: str, value: str, default_output_path: str = "default_output.txt") -> None:
     """
     Write an action output to a file in the format expected by GitHub Actions.
@@ -46,14 +58,15 @@ def set_action_output(name: str, value: str, default_output_path: str = "default
     Args:
         name: The name of the output parameter.
         value: The value of the output parameter.
-        default_output_path: The default file path to which the output is written if the
-        'GITHUB_OUTPUT' environment variable is not set. Defaults to "default_output.txt".
+        default_output_path: The default file path to which the output is written if the GITHUB_OUTPUT
+        environment variable is not set.
     """
     output_file = os.getenv("GITHUB_OUTPUT", default_output_path)
-    with open(output_file, "a", encoding="utf-8") as f:
-        f.write(f"{name}<<EOF\n")
-        f.write(f"{value}\n")
-        f.write("EOF\n")
+    try:
+        with open(output_file, "a", encoding="utf-8") as f:
+            f.write(f"{name}={value}\n")
+    except IOError as e:
+        logger.exception("Failed to write output to %s: %s", output_file, e)
 
 
 def set_action_failed(message: str) -> None:
