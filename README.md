@@ -67,9 +67,9 @@ jobs:
         id: aquasec
         uses: AbsaOSS/aquasec-scan-results@v0.1.0
         with:
-          aqua-key: ${{ secrets.AQUASEC_API_KEY }}
-          aqua-secret: ${{ secrets.AQUASEC_API_SECRET }}
-          repository-id: ${{ secrets.AQUASEC_REPOSITORY_ID }}
+          aqua-key: ${{ secrets.AQUA_KEY }}
+          aqua-secret: ${{ secrets.AQUA_SECRET }}
+          repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
           group-id: '1234'
           verbose-logging: 'true'
 
@@ -110,9 +110,9 @@ The action provides the following output for use in subsequent workflow steps:
   id: aquasec
   uses: AbsaOSS/aquasec-scan-results@v0.1.0
   with:
-    aqua-key: ${{ secrets.AQUASEC_API_KEY }}
-    aqua-secret: ${{ secrets.AQUASEC_API_SECRET }}
-    repository-id: ${{ secrets.AQUASEC_REPOSITORY_ID }}
+    aqua-key: ${{ secrets.AQUA_KEY }}
+    aqua-secret: ${{ secrets.AQUA_SECRET }}
+    repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
     group-id: '1234'
 
 - name: Use SARIF output
