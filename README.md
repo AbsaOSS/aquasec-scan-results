@@ -16,7 +16,7 @@
 This GitHub Action automates the integration of AquaSec security scan results into your repository's Security tab. 
 It retrieves scan findings via the AquaSec API, converts them to SARIF format, and makes them available for upload 
 to GitHub's Code Scanning feature. This provides developers with immediate visibility into security vulnerabilities 
-within their familiar GitHub workflow, eliminating the need to logging into AquaSec platform.
+within their familiar GitHub workflow, eliminating the need to log in into AquaSec platform.
 
 ---
 ## Prerequisites
@@ -30,7 +30,7 @@ To run this action successfully, make sure your environment meets the following 
 ---
 ## Adding the Action to Your Workflow
 
-Create a workflow file (e.g., `.github/workflows/aquasec-security-scan.yml`) to run daily at 10:00 AM UTC:
+Create a workflow file (e.g., `.github/workflows/aquasec-security-scan.yml`) to run daily at the midnight UTC:
 
 ```yaml
 name: AquaSec Night Scan
