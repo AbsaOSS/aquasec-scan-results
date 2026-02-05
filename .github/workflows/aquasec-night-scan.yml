@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -39,7 +39,7 @@ jobs:
           verbose-logging: 'false'
 
       - name: Upload Scan Results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4e94bd11f71e507f7f87df81788dff88d1dacbfb
+        uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb
         with:
           sarif_file: ${{ steps.aquasec.outputs.aquasec-sarif-file }}
           category: aquasec
