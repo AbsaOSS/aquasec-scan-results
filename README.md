@@ -30,14 +30,14 @@ To run this action successfully, make sure your environment meets the following 
 ---
 ## Adding the Action to Your Workflow
 
-Create a workflow file (e.g., `.github/workflows/aquasec-security-scan.yml`) to run daily at the midnight UTC:
+Create a workflow file (e.g., `.github/workflows/aquasec-night-scan.yml`) to run daily:
 
 ```yaml
 name: AquaSec Night Scan
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *' # Modify the cron expression to your desired schedule
   workflow_dispatch:
     
 concurrency:
@@ -67,10 +67,10 @@ jobs:
         id: aquasec
         uses: AbsaOSS/aquasec-scan-results@v0.1.0
         with:
-          aqua-key: ${{ secrets.AQUASEC_API_KEY }}
-          aqua-secret: ${{ secrets.AQUASEC_API_SECRET }}
-          repository-id: ${{ secrets.AQUASEC_REPOSITORY_ID }}
-          group-id: '1234'
+          aqua-key: ${{ secrets.AQUA_KEY }}
+          aqua-secret: ${{ secrets.AQUA_SECRET }}
+          group-id: ${{ secrets.AQUA_GROUP_ID }}
+          repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
           verbose-logging: 'true'
 
       - name: Upload Scan Results to GitHub Security
@@ -91,8 +91,8 @@ Only a few inputs are required to get started:
 |-------------------|-------------------------------------|----------|---------|
 | `aqua-key`        | AquaSec API Key credential          | Yes      | -       |
 | `aqua-secret`     | AquaSec API Secret credential       | Yes      | -       |
-| `repository-id`   | AquaSec Repository ID (UUID format) | Yes      | -       |
 | `group-id`        | AquaSec Group ID for authentication | Yes      | -       |
+| `repository-id`   | AquaSec Repository ID (UUID format) | Yes      | -       |
 | `verbose-logging` | Enable detailed logging             | No       | false   |
 
 ---
@@ -110,10 +110,10 @@ The action provides the following output for use in subsequent workflow steps:
   id: aquasec
   uses: AbsaOSS/aquasec-scan-results@v0.1.0
   with:
-    aqua-key: ${{ secrets.AQUASEC_API_KEY }}
-    aqua-secret: ${{ secrets.AQUASEC_API_SECRET }}
-    repository-id: ${{ secrets.AQUASEC_REPOSITORY_ID }}
-    group-id: '1234'
+    aqua-key: ${{ secrets.AQUA_KEY }}
+    aqua-secret: ${{ secrets.AQUA_SECRET }}
+    group-id: ${{ secrets.AQUA_GROUP_ID }}
+    repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
 
 - name: Use SARIF output
   run: |
