@@ -20,6 +20,7 @@ This module contains the main script for the AquaSec Scan Results GH Action.
 
 import json
 import logging
+import os
 import sys
 
 from requests.exceptions import RequestException
@@ -65,14 +66,15 @@ def run() -> None:
 
     try:
         output_filename = get_sarif_output_filename()
-        with open(output_filename, "w", encoding="utf-8") as sarif_file:
+        output_filepath = os.path.abspath(output_filename)
+        with open(output_filepath, "w", encoding="utf-8") as sarif_file:
             json.dump(sarif_data, sarif_file, indent=2)
-        logger.info("AquaSec Scan Results - SARIF output file saved in `%s`.", output_filename)
+        logger.info("AquaSec Scan Results - SARIF output file saved in `%s`.", output_filepath)
     except IOError as e:
         logger.exception("Failed to convert and write SARIF file: %s", str(e))
         sys.exit(1)
 
-    set_action_output("aquasec-sarif-file", output_filename)
+    set_action_output("aquasec-sarif-file", output_filepath)
 
     logger.info("AquaSec Scan Results - Finished.")
 
