@@ -37,7 +37,7 @@ name: AquaSec Security Night Scan
 
 on:
   schedule:
-    - cron: '0 10 * * *'
+    - cron: '0 11 * * *'
   workflow_dispatch:
     
 concurrency:
@@ -73,7 +73,7 @@ jobs:
       - name: Upload Scan Results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4e94bd11f71e507f7f87df81788dff88d1dacbfb
         with:
-          sarif_file: ${{ steps.aquasec.outputs.aquasec_sarif_file }}
+          sarif_file: ${{ steps.aquasec.outputs.aquasec-sarif-file }}
           category: aquasec
 ```
 
@@ -88,8 +88,8 @@ Only a few inputs are required to get started:
 |-------------------|-------------------------------------|----------|---------|
 | `aqua-key`        | AquaSec API Key credential          | Yes      | -       |
 | `aqua-secret`     | AquaSec API Secret credential       | Yes      | -       |
+| `repository-id`   | AquaSec Repository ID (UUID format) | Yes      | -       |
 | `group-id`        | AquaSec Group ID for authentication | Yes      | -       |
-| `repository-id`   | AquaSec Repository ID (UUID format) | Yes      | -       | 
 | `verbose-logging` | Enable detailed logging             | No       | false   |
 
 ---
@@ -97,20 +97,20 @@ Only a few inputs are required to get started:
 
 The action provides the following output for use in subsequent workflow steps:
 
-| Output Name          | Description                                                          | Example Value                           |
-|----------------------|----------------------------------------------------------------------|-----------------------------------------|
-| `aquasec-sarif-file` | Path to the generated SARIF file containing AquaSec scan findings    | `aquasec_scan_2026-02-04T10-00-00.sarif` |
+| Output Name          | Description                                           | Example Value                                                |
+|----------------------|-------------------------------------------------------|--------------------------------------------------------------|
+| `aquasec-sarif-file` | Full path to the generated SARIF file with findings   | `/home/runner/work/repo/aquasec_scan_2026-02-05_09-38.sarif` |
 
 **Usage Example:**
 ```yaml
 - name: Fetch AquaSec Scan Results
   id: aquasec
-  uses: AbsaOSS/aquasec-scan-results@v1
+  uses: AbsaOSS/aquasec-scan-results@v0.1.0
   with:
     aqua-key: ${{ secrets.AQUASEC_API_KEY }}
     aqua-secret: ${{ secrets.AQUASEC_API_SECRET }}
-    group-id: ${{ secrets.AQUASEC_GROUP_ID }}
     repository-id: ${{ secrets.AQUASEC_REPOSITORY_ID }}
+    group-id: '1234'
 
 - name: Use SARIF output
   run: |
