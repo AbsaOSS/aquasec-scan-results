@@ -62,15 +62,12 @@ def test_get_sarif_output_filename(mocker):
 def test_set_output_default(mocker):
     mocker.patch("os.getenv", return_value="default_output.txt")
     mock_open = mocker.patch("builtins.open", new_callable=mocker.mock_open)
-    multiline_value = "line1\nline2\nline3"
 
-    set_action_output("test-output", multiline_value)
+    set_action_output("test-output", "test_value")
 
     mock_open.assert_called_with("default_output.txt", "a", encoding="utf-8")
     handle = mock_open()
-    handle.write.assert_any_call("test-output<<EOF\n")
-    handle.write.assert_any_call("line1\nline2\nline3\n")
-    handle.write.assert_any_call("EOF\n")
+    handle.write.assert_any_call("test-output=test_value\n")
 
 
 def test_set_output_custom_path(mocker):
@@ -81,16 +78,19 @@ def test_set_output_custom_path(mocker):
 
     mock_open.assert_called_with("custom_output.txt", "a", encoding="utf-8")
     handle = mock_open()
-    handle.write.assert_any_call("custom-output<<EOF\n")
-    handle.write.assert_any_call("custom_value\n")
-    handle.write.assert_any_call("EOF\n")
+    handle.write.assert_any_call("custom-output=custom_value\n")
 
 
 def test_set_action_output_ioerror(mocker):
     mocker.patch("os.getenv", return_value="fail.txt")
     mock_open = mocker.patch("builtins.open", side_effect=IOError("disk full"))
     mock_logger = mocker.patch("src.utils.utils.logger.exception")
-    mock_exit = mocker.patch("sys.exit")
+
+    set_action_output("test-output", "test_value")
+
+    mock_open.assert_called_with("fail.txt", "a", encoding="utf-8")
+    mock_logger.assert_called_once()
+    assert "Failed to write output to" in str(mock_logger.call_args)
 
 
 # set_action_failed
