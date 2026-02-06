@@ -101,6 +101,7 @@ jobs:
           else
             echo "Success: Pylint score is above 9.5 (project score: $PYLINT_SCORE)."
           fi
+          echo "Integration test: Pylint score is above 9.5 (project score: $PYLINT_SCORE)."
 
   black-check:
     name: Black Format Check
