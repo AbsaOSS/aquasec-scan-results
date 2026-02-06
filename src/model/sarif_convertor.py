@@ -208,11 +208,6 @@ class SarifConvertor:
         message_parts.append(f"Message: {message_content}")
         message_parts.append(f"Alert hash: {finding_hash}")
 
-        extra_data = finding_json.get("extraData", {})
-        references = extra_data.get("references", [])
-        if references:
-            message_parts.append(f"Link: [{rule_id}]({references[0]})")
-
         message_text = "\n".join(message_parts)
         message_text = self._truncate_text(message_text, LONG_TEXT_MAX_LENGTH)
 
