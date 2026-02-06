@@ -148,7 +148,7 @@ class SarifConvertor:
         ]
 
         if references:
-            help_text_parts.append(f"Link: [{rule_id}]({references[0]})")
+            help_text_parts.append(f"**Link:** [{rule_id}]({references[0]})")
 
         help_text = "\n".join(help_text_parts)
 
