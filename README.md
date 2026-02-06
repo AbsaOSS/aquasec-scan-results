@@ -37,7 +37,7 @@ name: AquaSec Night Scan
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Modify the cron expression to your desired schedule
+    - cron: '23 2 * * *'  # Runs at 02:23 UTC daily (modify as needed)
   workflow_dispatch:
     
 concurrency:
@@ -71,7 +71,7 @@ jobs:
           aqua-secret: ${{ secrets.AQUA_SECRET }}
           group-id: ${{ secrets.AQUA_GROUP_ID }}
           repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
-          verbose-logging: 'true'
+          verbose-logging: 'false'
 
       - name: Upload Scan Results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4e94bd11f71e507f7f87df81788dff88d1dacbfb
@@ -80,12 +80,22 @@ jobs:
           category: aquasec
 ```
 
-**Note:** Store your AquaSec credentials as [GitHub repository secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+### Credentials Configuration
+
+**For AbsaOSS / absa-group Organization:**
+- `AQUA_KEY` and `AQUA_SECRET` are stored as **organization secrets** and automatically available to all repositories.
+- You only need to configure `AQUA_GROUP_ID` and `AQUA_REPOSITORY_ID` as **repository secrets**.
+
+**For Other Organizations:**
+- Store all four credentials (`AQUA_KEY`, `AQUA_SECRET`, `AQUA_GROUP_ID`, `AQUA_REPOSITORY_ID`) as [GitHub repository secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+- Contact your AquaSec administrator if you don't have API credentials (`AQUA_KEY`, `AQUA_SECRET`).
 
 ---
 ## Action Configuration
 
-Only a few inputs are required to get started:
+### Input Parameters
+
+The action requires the following inputs:
 
 | Name              | Description                         | Required | Default |
 |-------------------|-------------------------------------|----------|---------|
@@ -95,14 +105,41 @@ Only a few inputs are required to get started:
 | `repository-id`   | AquaSec Repository ID (UUID format) | Yes      | -       |
 | `verbose-logging` | Enable detailed logging             | No       | false   |
 
+### How to Obtain AquaSec Group ID
+
+**Option 1: Via User Management (requires User Management access)**
+
+1. Navigate to **User Management** → **Groups** in the AquaSec platform.
+2. Search for and select your specific group.
+3. Click on the group to view its details.
+4. The **Group ID** is displayed at the end of the URL after `/groups/`.
+
+**Option 2: Via JWT Token Inspection**
+
+1. Open your browser's Developer Tools and navigate to the **Network** tab.
+2. Reload the AquaSec platform and locate any API request in the **Request Headers** section.
+3. Copy your **Authorization Bearer token** from the headers.
+4. Decode the token using fro example [jwt.io](https://jwt.io/).
+5. In the decoded payload, look for the **user_groups_user** field containing your accessible Group IDs.
+
+### How to Obtain AquaSec Repository ID
+
+1. Navigate to **Code Repositories** in the AquaSec platform.
+2. Use the search bar to filter and locate your repository.
+3. Click on the repository name to open its overview page.
+4. The **Repository ID** (UUID format) is displayed in the URL after `/repositories/`.
+
+**Example:** `https://aquasec.com/repositories/9d93jajb-6c6e-438d-8bef-afb5a12396e5/overview`  
+→ Repository ID: `9d93jajb-6c6e-438d-8bef-afb5a12396e5`
+
 ---
 ## Action Outputs
 
 The action provides the following output for use in subsequent workflow steps:
 
-| Output Name          | Description                                           | Example Value                                                |
-|----------------------|-------------------------------------------------------|--------------------------------------------------------------|
-| `aquasec-sarif-file` | Full path to the generated SARIF file with findings   | `/home/runner/work/repo/aquasec_scan_2026-02-05_09-38.sarif` |
+| Output Name          | Description                                                | Example Value                                                |
+|----------------------|------------------------------------------------------------|--------------------------------------------------------------|
+| `aquasec-sarif-file` | Full unique path to the generated SARIF file with findings | `/home/runner/work/repo/aquasec_scan_2026-02-05_09-38.sarif` |
 
 **Usage Example:**
 ```yaml
