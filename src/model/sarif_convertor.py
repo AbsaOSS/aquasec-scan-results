@@ -139,7 +139,7 @@ class SarifConvertor:
 
         # Build help text
         help_text_parts = [
-            f"## {rule_id}",
+            f"### {rule_id}",
             f"**Type:** {category}",
             f"**Severity:** {severity_tag}",
             f"**Check:** {title}",
