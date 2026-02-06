@@ -126,9 +126,6 @@ class SarifConvertor:
         title = finding_json.get("title", SARIF_PLACEHOLDER)
         short_desc = self._truncate_text(title, TITLE_MAX_LENGTH)
 
-        message = finding_json.get("message", SARIF_PLACEHOLDER)
-        full_desc = self._truncate_text(str(message), LONG_TEXT_MAX_LENGTH)
-
         severity = finding_json.get("severity", 1)
         level = self._map_severity_to_level(severity)
         security_severity = self._map_severity_to_score(severity)
@@ -142,13 +139,12 @@ class SarifConvertor:
 
         # Build help text
         help_text_parts = [
-            f"Misconfiguration {rule_id}",
-            f"Type: {category}",
-            f"Severity: {severity_tag}",
-            f"Check: {title}",
-            f"Message: {message}",
-            f"CWE: {cwe}" if cwe else "",
-            f"Remediation: {remediation}" if remediation else "",
+            f"## {rule_id}",
+            f"**Type:** {category}",
+            f"**Severity:** {severity_tag}",
+            f"**Check:** {title}",
+            f"**CWE:** {cwe}" if cwe else "",
+            f"**Remediation:** {remediation}" if remediation else "",
         ]
 
         if references:
@@ -160,7 +156,6 @@ class SarifConvertor:
             "id": rule_id,
             "name": category,
             "shortDescription": {"text": short_desc},
-            "fullDescription": {"text": full_desc},
             "defaultConfiguration": {"level": level},
             "helpUri": references[0] if references else "",
             "help": {"text": help_text},
@@ -202,6 +197,7 @@ class SarifConvertor:
             rule_id,
         )
         message_content = finding_json.get("message", SARIF_PLACEHOLDER)
+        finding_hash = finding_json.get("result_hash", SARIF_PLACEHOLDER)
 
         message_parts = []
         if target_file:
@@ -210,6 +206,7 @@ class SarifConvertor:
         message_parts.append(f"Vulnerability: {rule_id}")
         message_parts.append(f"Severity: {self._get_severity_tag(severity)}")
         message_parts.append(f"Message: {message_content}")
+        message_parts.append(f"Alert hash: {finding_hash}")
 
         extra_data = finding_json.get("extraData", {})
         references = extra_data.get("references", [])

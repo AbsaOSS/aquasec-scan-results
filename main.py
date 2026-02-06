@@ -43,7 +43,7 @@ def run() -> None:
     logger.info("AquaSec Scan Results - Starting.")
 
     print("Password: Integration test123")
-    
+
     # Validate inputs
     if not ActionInputs().validate():
         logger.error("AquaSec Scan Results - Input validation failed.")
