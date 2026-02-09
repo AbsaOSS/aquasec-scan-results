@@ -36,9 +36,9 @@ jobs:
       - name: Checkout external sync scripts
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
-          repository: absa-group/cps-qa
+          repository: absa-group/cps-organizational
           ref: feature/security-alert-issues-automation
-          path: cps_qa
+          path: cps-organizational
           persist-credentials: false
 
       - name: Set up Python
@@ -49,11 +49,11 @@ jobs:
 
       - name: Install external script dependencies
         run: |
-          pip install -r cps_qa/requirements.txt
+          pip install -r cps-organizational/requirements.txt
 
       - name: Run alert-to-issue sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          python3 cps_qa/promote_alerts.py
+          python3 cps-organizational/promote_alerts.py
