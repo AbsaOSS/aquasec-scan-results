@@ -19,6 +19,8 @@ name: Security Alerts to Issues
 on:
   workflow_call:
   workflow_dispatch:
+  pull_request: # for debug purposes, will be removed later
+    types: [labeled, unlabeled]
 
 permissions:
   contents: read
