@@ -35,6 +35,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           repository: absa-group/cps-qa
+          ref: feature/security-alert-issues-automation
           path: cps_qa
           persist-credentials: false
 
