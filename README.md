@@ -31,5 +31,3 @@ jobs:
 ```
 
 The workflow can also be triggered manually via `workflow_dispatch`.
-
-No custom inputs or secrets are required — the workflow uses the default `GITHUB_TOKEN` and repository context provided by GitHub Actions.
