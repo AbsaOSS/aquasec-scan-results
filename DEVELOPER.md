@@ -7,6 +7,7 @@
 - [Run mypy Tool Locally](#run-mypy-tool-locally)
 - [Run Unit Tests Locally](#run-unit-tests-locally)
 - [Code Coverage](#code-coverage)
+- [Pre-Commit Quality Check Tool](#pre-commit-quality-check-tool)
 - [Releasing](#releasing)
 
 ## Project Setup
@@ -113,7 +114,7 @@ To run Pylint on a specific file, follow the pattern `pylint <path_to_file>/<nam
 Example:
 ```shell
 pylint src/model/authenticator.py
-``` 
+```
 
 ### Expected Output
 
@@ -153,7 +154,7 @@ To run Black on a specific file, follow the pattern `black <path_to_file>/<name_
 Example:
 ```shell
 black src/model/sarif_convertor.py
-``` 
+```
 
 ### Expected Output
 
@@ -167,11 +168,11 @@ All done! ✨ 🍰 ✨
 
 ## Run my[py] Tool Locally
 
-This project uses the [my[py]](https://mypy.readthedocs.io/en/stable/) 
+This project uses the [my[py]](https://mypy.readthedocs.io/en/stable/)
 tool which is a static type checker for Python.
 
 > Type checkers help ensure that you're using variables and functions in your code correctly.
-> With mypy, add type hints (PEP 484) to your Python programs, 
+> With mypy, add type hints (PEP 484) to your Python programs,
 > and mypy will warn you when you use those types incorrectly.
 
 my[py] configuration is in `pyproject.toml` file.
@@ -190,7 +191,7 @@ To run my[py] check on a specific file, follow the pattern `mypy <path_to_file>/
 Example:
 ```shell
    mypy src/action_inputs.py
-``` 
+```
 
 ### Expected Output
 
@@ -234,6 +235,61 @@ See the coverage report on the path:
 
 ```shell
 open htmlcov/index.html
+```
+
+---
+## Pre-Commit Quality Check Tool
+
+This project uses [pre-commit](https://pre-commit.com/) to automatically run code quality checks before each commit.
+Pre-commit hooks ensure that all code meets quality standards before it enters the repository.
+
+### Configured Hooks
+
+The following hooks run automatically on every commit:
+- **Black** - Code formatting (formats the code if the hook fails)
+- **my[py]** - Static type checking
+- **Pylint** - Static code analysis (minimum score 9.5)
+- **Pytest** - Unit tests with coverage (minimum 80%)
+- **check-yaml** - Validates YAML file syntax
+- **name-tests-test** - Enforces test file naming convention (must start with `test_`)
+- **end-of-file-fixer** - Ensures files end with a single newline (fix if the hook fails)
+
+### Install Pre-Commit Hooks
+
+After setting up your Python environment, install the pre-commit hooks:
+
+```shell
+pre-commit install
+```
+
+### Run Pre-Commit Manually
+
+To run all hooks on all files without committing:
+
+```shell
+pre-commit run --all-files
+```
+
+To run pre-commit on specific files:
+
+```shell
+pre-commit run --files src/model/authenticator.py
+```
+
+### Skip Pre-Commit Hooks
+
+If you need to commit without running hooks:
+
+```shell
+git commit --no-verify -m "your commit message"
+```
+
+### Update Pre-Commit Hooks
+
+To update hooks to their latest versions:
+
+```shell
+pre-commit autoupdate
 ```
 
 ---
