@@ -119,7 +119,7 @@ The action requires the following inputs:
 1. Open your browser's Developer Tools and navigate to the **Network** tab.
 2. Reload the AquaSec platform and locate any API request in the **Request Headers** section.
 3. Copy your **Authorization Bearer token** from the headers.
-4. Decode the token using fro example [jwt.io](https://jwt.io/).
+4. Decode the token using for example [jwt.io](https://jwt.io/).
 5. In the decoded payload, look for the **user_groups_user** field containing your accessible Group IDs.
 
 ### How to Obtain AquaSec Repository ID
