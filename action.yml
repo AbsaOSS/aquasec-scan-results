@@ -40,11 +40,12 @@ runs:
       run: |
         echo "::add-mask::${{ inputs.aqua-key }}"
         echo "::add-mask::${{ inputs.aqua-secret }}"
+        echo "::add-mask::${{ inputs.group-id }}"
         echo "::add-mask::${{ inputs.repository-id }}"
         echo "INPUT_AQUA_KEY=${{ inputs.aqua-key }}" >> $GITHUB_ENV
         echo "INPUT_AQUA_SECRET=${{ inputs.aqua-secret }}" >> $GITHUB_ENV
-        echo "INPUT_REPOSITORY_ID=${{ inputs.repository-id }}" >> $GITHUB_ENV
         echo "INPUT_GROUP_ID=${{ inputs.group-id }}" >> $GITHUB_ENV
+        echo "INPUT_REPOSITORY_ID=${{ inputs.repository-id }}" >> $GITHUB_ENV
         echo "INPUT_VERBOSE_LOGGING=${{ inputs.verbose-logging }}" >> $GITHUB_ENV
       shell: bash
 
@@ -53,8 +54,8 @@ runs:
       env:
         INPUT_AQUA_KEY: ${{ env.INPUT_AQUA_KEY }}
         INPUT_AQUA_SECRET: ${{ env.INPUT_AQUA_SECRET }}
-        INPUT_REPOSITORY_ID: ${{ env.INPUT_REPOSITORY_ID }}
         INPUT_GROUP_ID: ${{ env.INPUT_GROUP_ID }}
+        INPUT_REPOSITORY_ID: ${{ env.INPUT_REPOSITORY_ID }}
         INPUT_VERBOSE_LOGGING: ${{ env.INPUT_VERBOSE_LOGGING }}
       run: |
         export PYTHONPATH="${PYTHONPATH}:${{ github.action_path }}"
