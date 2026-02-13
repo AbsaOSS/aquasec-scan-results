@@ -14,9 +14,6 @@
 # limitations under the License.
 #
 
-# Example caller workflow – add this to your application repository as
-# .github/workflows/aquasec-night-scan.yml
-#
 # It delegates to the reusable workflow in the organizational-workflows repo.
 
 name: Aquasec Night Scan

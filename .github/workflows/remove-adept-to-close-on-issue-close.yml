@@ -14,11 +14,7 @@
 # limitations under the License.
 #
 
-# Example caller workflow – add this to your application repository as
-# .github/workflows/remove-adept-to-close-on-issue-close.yml
-#
 # It delegates to the reusable workflow in the organizational-workflows repo.
-# Adjust <org> and <default-branch> to match your organization.
 
 name: Remove sec:adept-to-close on close
 

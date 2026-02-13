@@ -86,6 +86,15 @@ chmod +x run_script.sh
 ./run_script.sh
 ```
 
+### Night scan workflow (CI)
+
+The nightly scan execution in CI is orchestrated via a shared reusable workflow.
+
+- This repository contains the delegating workflow: `.github/workflows/aquasec-night-scan.yml`
+- The detailed implementation lives in: `AbsaOSS/organizational-workflows/.github/workflows/aquasec-night-scan.yml`
+
+If you need to align local runs with the CI behaviour (permissions, secrets, notifications, step ordering), use the workflow file as the source of truth.
+
 ---
 ## Run Pylint Check Locally
 
