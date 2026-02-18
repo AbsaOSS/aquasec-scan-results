@@ -47,3 +47,4 @@ Quality gates (run after changes, fix only if below threshold)
 - mypy .
 - pylint $(git ls-files '*.py') >= 9.5
 - pytest tests/ >= 80% coverage
+- Pre-commit hooks configured in `.pre-commit-config.yaml`

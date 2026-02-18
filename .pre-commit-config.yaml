@@ -1,0 +1,39 @@
+default_language_version:
+    python: python3.14
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: name-tests-test
+        args: ['--pytest-test-first']
+      - id: check-yaml
+
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+        exclude: 'tests/'
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.1
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-requests==2.32.4.20260107]
+        exclude: 'tests/'
+
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v4.0.4
+    hooks:
+      - id: pylint
+        args: ['--fail-under=9.5']
+        additional_dependencies: [ requests==2.32.5 ]
+        exclude: 'tests/'
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest
+        entry: bash -c 'pytest tests/ --cov=. --cov-fail-under=80 -q'
+        language: system
+        pass_filenames: false
