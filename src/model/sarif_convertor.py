@@ -112,7 +112,6 @@ class SarifConvertor:
         """
         Build a SARIF rule object from an AquaSec finding.
 
-
         Args:
             finding_json: AquaSec finding dictionary.
 
@@ -131,26 +130,9 @@ class SarifConvertor:
         security_severity = self._map_severity_to_score(severity)
         severity_tag = self._get_severity_tag(severity)
         category = finding_json.get("category", SARIF_PLACEHOLDER)
+        references = finding_json.get("extraData", {}).get("references", [])
 
-        extra_data = finding_json.get("extraData", {})
-        references = extra_data.get("references", [])
-        cwe = extra_data.get("cwe", "")
-        remediation = extra_data.get("remediation", "")
-
-        # Build help text
-        help_text_parts = [
-            f"**{rule_id}**",
-            f"**Type:** {category}",
-            f"**Severity:** {severity_tag}",
-            f"**Check:** {title}",
-            f"**CWE:** {cwe}" if cwe else "",
-            f"**Remediation:** {remediation}" if remediation else "",
-        ]
-
-        if references:
-            help_text_parts.append(f"**Link:** [{rule_id}]({references[0]})")
-
-        help_text = "\n".join(help_text_parts)
+        help_text = self._build_rule_message_text(finding_json)
 
         rule: dict[str, Any] = {
             "id": rule_id,
@@ -170,6 +152,51 @@ class SarifConvertor:
 
         return rule
 
+    def _build_rule_message_text(self, finding_json: Finding) -> str:
+        """
+        Build markdown message content for a SARIF rule.
+
+        Args:
+            finding_json: AquaSec finding dictionary.
+
+        Returns:
+            Formatted markdown message body string.
+        """
+        rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
+        rule_id = self._truncate_text(rule_id, RULE_ID_MAX_LENGTH)
+        severity_tag = self._get_severity_tag(finding_json.get("severity", 1))
+        extra_data = finding_json.get("extraData", {})
+        owasp = extra_data.get("owasp", [])
+        references = extra_data.get("references", [])
+
+        message_header = [f"**{rule_id}**"]
+        message_body = self._build_message_body(
+            [
+                ("Type", finding_json.get("category", SARIF_PLACEHOLDER)),
+                ("Severity", severity_tag),
+                ("Title", finding_json.get("title", SARIF_PLACEHOLDER)),
+                ("CWE", extra_data.get("cwe", "")),
+                ("Fixed version", finding_json.get("fixed_version", "")),
+                ("Published date", finding_json.get("published_date", "")),
+                ("Package name", finding_json.get("package_name", "")),
+                ("Category", extra_data.get("category", "")),
+                ("Impact", extra_data.get("impact", "")),
+                ("Confidence", extra_data.get("confidence", "")),
+                ("Likelihood", extra_data.get("likelihood", "")),
+                ("Remediation", extra_data.get("remediation", "")),
+            ]
+        )
+
+        message = message_header + message_body
+
+        if owasp:
+            message.append(f"**OWASP:**\n{self._format_list_as_markdown(owasp)}")
+
+        if references:
+            message.append(f"**References:** \n{self._format_list_as_markdown(references)}")
+
+        return "\n".join(message)
+
     def _build_sarif_finding(self, finding_json: Finding, rule_index: int) -> dict:
         """
         Build a SARIF finding object from an AquaSec finding.
@@ -186,30 +213,17 @@ class SarifConvertor:
 
         severity = finding_json.get("severity", 1)
         level = self._map_severity_to_level(severity)
-
-        # Build message text
         category = finding_json.get("category", SARIF_PLACEHOLDER)
         target_file = finding_json.get("target_file", "")
+
         logger.debug(
             "Building a finding in category `%s` that targets a file `%s` (rule: `%s`).",
             category,
             target_file,
             rule_id,
         )
-        message_content = finding_json.get("message", SARIF_PLACEHOLDER)
-        finding_hash = finding_json.get("result_hash", SARIF_PLACEHOLDER)
 
-        message_parts = []
-        if target_file:
-            message_parts.append(f"Artifact: {target_file}")
-        message_parts.append(f"Type: {category}")
-        message_parts.append(f"Vulnerability: {rule_id}")
-        message_parts.append(f"Severity: {self._get_severity_tag(severity)}")
-        message_parts.append(f"Message: {message_content}")
-        message_parts.append(f"Alert hash: {finding_hash}")
-
-        message_text = "\n".join(message_parts)
-        message_text = self._truncate_text(message_text, LONG_TEXT_MAX_LENGTH)
+        message_text = self._build_finding_message(finding_json)
 
         finding: dict[str, Any] = {
             "ruleId": rule_id,
@@ -218,39 +232,127 @@ class SarifConvertor:
             "message": {"text": message_text},
         }
 
-        # Add location information
-        if target_file:
-            location: dict[str, Any] = {
-                "physicalLocation": {
-                    "artifactLocation": {
-                        "uri": target_file,
-                        "uriBaseId": "ROOTPATH",
-                    },
-                },
-                "message": {"text": str(target_file)},
-            }
-
-            # Add line information
-            start_line = finding_json.get("target_start_line", 0)
-            end_line = finding_json.get("target_end_line", 0)
-
-            if start_line and isinstance(start_line, int) and start_line > 0:
-                region: dict[str, Any] = {
-                    "startLine": start_line,
-                    "startColumn": 1,
-                }
-                if end_line and isinstance(end_line, int) and end_line > 0:
-                    region["endLine"] = end_line
-                    region["endColumn"] = 1
-                else:
-                    region["endLine"] = start_line
-                    region["endColumn"] = 1
-
-                location["physicalLocation"]["region"] = region
-
+        location = self._build_finding_location(finding_json)
+        if location:
             finding["locations"] = [location]
 
         return finding
+
+    def _build_finding_message(self, finding_json: Finding) -> str:
+        """
+        Build message text content for a SARIF finding.
+
+        Args:
+            finding_json: AquaSec finding dictionary.
+
+        Returns:
+            Formatted message text string.
+        """
+        rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
+        rule_id = self._truncate_text(rule_id, RULE_ID_MAX_LENGTH)
+        severity = finding_json.get("severity", 1)
+        reachable = finding_json.get("reachable", None)
+        start_line = finding_json.get("target_start_line", 0)
+        end_line = finding_json.get("target_end_line", 0)
+
+        message = self._build_message_body(
+            [
+                ("Artifact", finding_json.get("target_file", "")),
+                ("Type", finding_json.get("category", SARIF_PLACEHOLDER)),
+                ("Vulnerability", rule_id),
+                ("Severity", self._get_severity_tag(severity)),
+                ("Message", finding_json.get("message", "")),
+                ("Repository", finding_json.get("repository_full_name", "")),
+                ("Reachable", str(reachable) if reachable is not None else ""),
+                ("Scan date", finding_json.get("scan_date", "")),
+                ("First seen", finding_json.get("first_seen", "")),
+                ("SCM file", finding_json.get("scm_file", "")),
+                ("Installed version", finding_json.get("installed_version", "")),
+                ("Start line", str(start_line) if start_line else ""),
+                ("End line", str(end_line) if end_line else ""),
+                ("Alert hash", finding_json.get("result_hash", SARIF_PLACEHOLDER)),
+            ]
+        )
+
+        message_text = "\n".join(message)
+        return self._truncate_text(message_text, LONG_TEXT_MAX_LENGTH)
+
+    @staticmethod
+    def _build_finding_location(finding_json: Finding) -> dict[str, Any] | None:
+        """
+        Build SARIF location object from finding data.
+
+        Args:
+            finding_json: AquaSec finding dictionary.
+
+        Returns:
+            SARIF location dictionary, or None if no target file.
+        """
+        target_file = finding_json.get("target_file", "")
+        if not target_file:
+            return None
+
+        location: dict[str, Any] = {
+            "physicalLocation": {
+                "artifactLocation": {
+                    "uri": target_file,
+                    "uriBaseId": "ROOTPATH",
+                },
+            },
+            "message": {"text": str(target_file)},
+        }
+
+        start_line = finding_json.get("target_start_line", 0)
+        end_line = finding_json.get("target_end_line", 0)
+
+        if start_line and isinstance(start_line, int) and start_line > 0:
+            region: dict[str, Any] = {
+                "startLine": start_line,
+                "startColumn": 1,
+            }
+            if end_line and isinstance(end_line, int) and end_line > 0:
+                region["endLine"] = end_line
+                region["endColumn"] = 1
+            else:
+                region["endLine"] = start_line
+                region["endColumn"] = 1
+
+            location["physicalLocation"]["region"] = region
+
+        return location
+
+    @staticmethod
+    def _build_message_body(fields: list[tuple[str, str]]) -> list[str]:
+        """
+        Build formatted parts from label-value pairs, skipping empty values.
+
+        Args:
+            fields: List of (label, value) tuples. Empty string values are skipped.
+            bold: If True, format as Markdown bold, else plain text.
+
+        Returns:
+            List of formatted non-empty strings.
+        """
+        parts = []
+        for label, value in fields:
+            if not value:
+                continue
+            parts.append(f"**{label}:** {value}")
+
+        return parts
+
+    @staticmethod
+    def _format_list_as_markdown(items: list[str]) -> str:
+        """
+        Format list items as indented markdown bullet points.
+
+        Args:
+            items: List of strings to format.
+
+        Returns:
+            Markdown formatted bullet list string.
+        """
+        return "\n".join(f"  - {item}" for item in items)
 
     def convert_to_sarif(self, findings_json: dict) -> dict:
         """
