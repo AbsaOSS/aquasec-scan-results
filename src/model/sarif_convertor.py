@@ -310,12 +310,8 @@ class SarifConvertor:
                 "startLine": start_line,
                 "startColumn": 1,
             }
-            if end_line and isinstance(end_line, int) and end_line > 0:
+            if end_line and isinstance(end_line, int) and end_line > 0 and end_line != start_line:
                 region["endLine"] = end_line
-                region["endColumn"] = 1
-            else:
-                region["endLine"] = start_line
-                region["endColumn"] = 1
 
             location["physicalLocation"]["region"] = region
 
@@ -328,7 +324,6 @@ class SarifConvertor:
 
         Args:
             fields: List of (label, value) tuples. Empty string values are skipped.
-            bold: If True, format as Markdown bold, else plain text.
 
         Returns:
             List of formatted non-empty strings.
