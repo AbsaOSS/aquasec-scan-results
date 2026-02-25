@@ -310,7 +310,7 @@ class SarifConvertor:
                 "startLine": start_line,
                 "startColumn": 1,
             }
-            if end_line and isinstance(end_line, int) and end_line > 0 and end_line != start_line:
+            if end_line and isinstance(end_line, int) and end_line > start_line:
                 region["endLine"] = end_line
 
             location["physicalLocation"]["region"] = region
