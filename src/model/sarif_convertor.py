@@ -174,7 +174,6 @@ class SarifConvertor:
             [
                 ("Type", finding_json.get("category", SARIF_PLACEHOLDER)),
                 ("Severity", severity_tag),
-                ("Title", finding_json.get("title", SARIF_PLACEHOLDER)),
                 ("CWE", extra_data.get("cwe", "")),
                 ("Fixed version", finding_json.get("fixed_version", "")),
                 ("Published date", finding_json.get("published_date", "")),
@@ -184,16 +183,17 @@ class SarifConvertor:
                 ("Confidence", extra_data.get("confidence", "")),
                 ("Likelihood", extra_data.get("likelihood", "")),
                 ("Remediation", extra_data.get("remediation", "")),
-            ]
+            ],
+            bold_labels=True,
         )
 
         message = message_header + message_body
 
         if owasp:
-            message.append(f"**OWASP:**\n{self._format_list_as_markdown(owasp)}")
+            message.append(f"**OWASP:** {self._format_list_as_markdown(owasp)}")
 
         if references:
-            message.append(f"**References:** \n{self._format_list_as_markdown(references)}")
+            message.append(f"**References:** {self._format_list_as_markdown(references)}")
 
         return "\n".join(message)
 
@@ -271,7 +271,8 @@ class SarifConvertor:
                 ("Start line", str(start_line) if start_line else ""),
                 ("End line", str(end_line) if end_line else ""),
                 ("Alert hash", finding_json.get("result_hash", SARIF_PLACEHOLDER)),
-            ]
+            ],
+            bold_labels=False,
         )
 
         message_text = "\n".join(message)
@@ -318,12 +319,13 @@ class SarifConvertor:
         return location
 
     @staticmethod
-    def _build_message_body(fields: list[tuple[str, str]]) -> list[str]:
+    def _build_message_body(fields: list[tuple[str, str]], bold_labels: bool) -> list[str]:
         """
         Build formatted parts from label-value pairs, skipping empty values.
 
         Args:
             fields: List of (label, value) tuples. Empty string values are skipped.
+            bold_labels: Boolean value for bold labels formatting.
 
         Returns:
             List of formatted non-empty strings.
@@ -332,7 +334,10 @@ class SarifConvertor:
         for label, value in fields:
             if not value:
                 continue
-            parts.append(f"**{label}:** {value}")
+            if bold_labels:
+                parts.append(f"**{label}:** {value}")
+            else:
+                parts.append(f"{label}: {value}")
 
         return parts
 
