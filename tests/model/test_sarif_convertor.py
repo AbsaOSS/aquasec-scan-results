@@ -191,7 +191,6 @@ def test_convert_to_sarif_rule_message_text_includes_all_fields():
     assert "**test-rule**" in help_text
     assert "**Type:** sast" in help_text
     assert "**Severity:** HIGH" in help_text
-    assert "**Title:** Test" in help_text
     assert "**CWE:** CWE-295" in help_text
     assert "**Fixed version:** 1.2.3" in help_text
     assert "**Published date:** 2026-01-01" in help_text
@@ -268,20 +267,20 @@ def test_convert_to_sarif_alert_message_includes_all_fields():
     actual = SarifConvertor().convert_to_sarif(findings)
 
     message = actual["runs"][0]["results"][0]["message"]["text"]
-    assert "**Artifact:** src/main.py" in message
-    assert "**Type:** sast" in message
-    assert "**Vulnerability:** test-rule" in message
-    assert "**Severity:** HIGH" in message
-    assert "**Message:** Test message" in message
-    assert "**Repository:** org/repo" in message
-    assert "**Reachable:** False" in message
-    assert "**Scan date:** 2026-02-08T15:16:40.219Z" in message
-    assert "**First seen:** 2025-09-17T12:46:48.271Z" in message
-    assert "**SCM file:** https://github.com/org/repo/blob/abc/src/main.py" in message
-    assert "**Installed version:** 1.0.0" in message
-    assert "**Start line:** 42" in message
-    assert "**End line:** 45" in message
-    assert "**Alert hash:** abc123" in message
+    assert "Artifact: src/main.py" in message
+    assert "Type: sast" in message
+    assert "Vulnerability: test-rule" in message
+    assert "Severity: HIGH" in message
+    assert "Message: Test message" in message
+    assert "Repository: org/repo" in message
+    assert "Reachable: False" in message
+    assert "Scan date: 2026-02-08T15:16:40.219Z" in message
+    assert "First seen: 2025-09-17T12:46:48.271Z" in message
+    assert "SCM file: https://github.com/org/repo/blob/abc/src/main.py" in message
+    assert "Installed version: 1.0.0" in message
+    assert "Start line: 42" in message
+    assert "End line: 45" in message
+    assert "Alert hash: abc123" in message
 
 
 def test_convert_to_sarif_alert_message_omits_empty_optional_fields():
@@ -301,14 +300,14 @@ def test_convert_to_sarif_alert_message_omits_empty_optional_fields():
     actual = SarifConvertor().convert_to_sarif(findings)
 
     message = actual["runs"][0]["results"][0]["message"]["text"]
-    assert "**Repository:**" not in message
-    assert "**Reachable:**" not in message
-    assert "**Scan date:**" not in message
-    assert "**First seen:**" not in message
-    assert "**SCM file:**" not in message
-    assert "**Installed version:**" not in message
-    assert "**Start line:**" not in message
-    assert "**End line:**" not in message
+    assert "Repository:" not in message
+    assert "Reachable:" not in message
+    assert "Scan date:" not in message
+    assert "First seen:" not in message
+    assert "SCM file:" not in message
+    assert "Installed version:" not in message
+    assert "Start line:" not in message
+    assert "End line:" not in message
 
 
 # _build_message_body
@@ -317,7 +316,7 @@ def test_convert_to_sarif_alert_message_omits_empty_optional_fields():
 def test_build_message_body_formats_with_bold():
     fields = [("Label", "value"), ("Empty", ""), ("Other", "data")]
 
-    actual = SarifConvertor._build_message_body(fields)
+    actual = SarifConvertor._build_message_body(fields, bold_labels=True)
 
     assert ["**Label:** value", "**Other:** data"] == actual
 
@@ -325,7 +324,7 @@ def test_build_message_body_formats_with_bold():
 def test_build_message_body_skips_empty_values():
     fields = [("First", ""), ("Second", "val"), ("Third", "")]
 
-    actual = SarifConvertor._build_message_body(fields)
+    actual = SarifConvertor._build_message_body(fields, bold_labels=True)
 
     assert ["**Second:** val"] == actual
 
