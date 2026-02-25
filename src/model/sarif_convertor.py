@@ -190,10 +190,10 @@ class SarifConvertor:
         message = message_header + message_body
 
         if owasp:
-            message.append(f"**OWASP:** {self._format_list_as_markdown(owasp)}")
+            message.append(f"**OWASP:**\n{self._format_list_as_markdown(owasp)}")
 
         if references:
-            message.append(f"**References:** {self._format_list_as_markdown(references)}")
+            message.append(f"**References:**\n{self._format_list_as_markdown(references)}")
 
         return "\n".join(message)
 
