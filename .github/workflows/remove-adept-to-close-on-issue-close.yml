@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 
-# It delegates to the reusable workflow in the organizational-workflows repo.
+# It delegates to the remove-adept-to-close-on-issue-close.yml reusable workflow in the organizational-workflows repo.
 
-name: Remove sec:adept-to-close on close
+name: Remove adept to close on issue close
 
 on:
   issues:

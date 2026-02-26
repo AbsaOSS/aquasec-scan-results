@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# It delegates to the reusable workflow in the organizational-workflows repo.
+# It delegates to the aquasec-night-scan.yml reusable workflow in the organizational-workflows repo.
 
 name: Aquasec Night Scan
 
@@ -34,7 +34,7 @@ permissions:
   security-events: write
 
 jobs:
-  scan:
+  aquasec-night-scan:
     uses: AbsaOSS/organizational-workflows/.github/workflows/aquasec-night-scan.yml@c1fa5b54ff24fea071415da89abc4f0506344f01
     secrets:
       AQUA_KEY: ${{ secrets.AQUA_KEY }}

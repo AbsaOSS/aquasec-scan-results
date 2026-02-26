@@ -91,8 +91,8 @@ chmod +x run_script.sh
 
 The nightly scan execution in CI is orchestrated via a shared reusable workflow.
 
-- This repository contains the delegating workflow: `.github/workflows/aquasec-night-scan.yml`
-- The detailed implementation lives in: `AbsaOSS/organizational-workflows/.github/workflows/aquasec-night-scan.yml`
+- This repository contains the delegating workflow: [.github/workflows/aquasec-night-scan.yml](.github/workflows/aquasec-night-scan.yml).
+- The detailed implementation lives in: [`AbsaOSS/organizational-workflows/.github/workflows/aquasec-scan.yml`](https://github.com/AbsaOSS/organizational-workflows/blob/master/.github/workflows/aquasec-scan.yml)
 
 If you need to align local runs with the CI behaviour (permissions, secrets, notifications, step ordering), use the workflow file as the source of truth.
 
