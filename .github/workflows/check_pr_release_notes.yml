@@ -18,7 +18,7 @@ name: Check PR Release Notes
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
     branches: [ master ]
 
 jobs:

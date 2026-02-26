@@ -35,7 +35,7 @@ permissions:
 
 jobs:
   scan:
-    uses: AbsaOSS/organizational-workflows/.github/workflows/aquasec-night-scan.yml@master
+    uses: AbsaOSS/organizational-workflows/.github/workflows/aquasec-night-scan.yml@c1fa5b54ff24fea071415da89abc4f0506344f01
     secrets:
       AQUA_KEY: ${{ secrets.AQUA_KEY }}
       AQUA_SECRET: ${{ secrets.AQUA_SECRET }}
