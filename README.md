@@ -11,7 +11,7 @@
 - [Acknowledgements](#acknowledgements)
 <!--- end of toc -->
 
-
+TEST
 ## Overview
 This GitHub Action automates the integration of AquaSec security scan results into your repository's Security tab. 
 It retrieves scan findings via the AquaSec API, converts them to SARIF format, and makes them available for upload 
