@@ -159,6 +159,185 @@ def test_convert_to_sarif_includes_reference_as_help_uri():
     assert "https://example.com" == actual["runs"][0]["tool"]["driver"]["rules"][0]["helpUri"]
 
 
+def test_convert_to_sarif_rule_message_text_includes_all_fields():
+    findings = {
+        "total": 1,
+        "data": [
+            {
+                "avd_id": "test-rule",
+                "title": "Test",
+                "severity": 3,
+                "category": "sast",
+                "fixed_version": "1.2.3",
+                "published_date": "2026-01-01",
+                "package_name": "test-pkg",
+                "extraData": {
+                    "cwe": "CWE-295",
+                    "owasp": ["A03:2017 - Sensitive Data Exposure", "A07:2021"],
+                    "category": "security/audit",
+                    "impact": "HIGH",
+                    "confidence": "MEDIUM",
+                    "likelihood": "LOW",
+                    "remediation": "Fix it",
+                    "references": ["https://example.com", "https://other.com"],
+                },
+            }
+        ],
+    }
+
+    actual = SarifConvertor().convert_to_sarif(findings)
+
+    help_text = actual["runs"][0]["tool"]["driver"]["rules"][0]["help"]["text"]
+    assert "**test-rule**" in help_text
+    assert "**Type:** sast" in help_text
+    assert "**Severity:** HIGH" in help_text
+    assert "**CWE:** CWE-295" in help_text
+    assert "**Fixed version:** 1.2.3" in help_text
+    assert "**Published date:** 2026-01-01" in help_text
+    assert "**Package name:** test-pkg" in help_text
+    assert "**Category:** security/audit" in help_text
+    assert "**Impact:** HIGH" in help_text
+    assert "**Confidence:** MEDIUM" in help_text
+    assert "**Likelihood:** LOW" in help_text
+    assert "**Remediation:** Fix it" in help_text
+    assert "**OWASP:**" in help_text
+    assert "  - A03:2017 - Sensitive Data Exposure" in help_text
+    assert "  - A07:2021" in help_text
+    assert "**References:**" in help_text
+    assert "  - https://example.com" in help_text
+    assert "  - https://other.com" in help_text
+
+
+def test_convert_to_sarif_rule_message_text_omits_empty_fields():
+    findings = {
+        "total": 1,
+        "data": [
+            {
+                "avd_id": "test-rule",
+                "title": "Test",
+                "severity": 2,
+                "category": "sast",
+                "fixed_version": "",
+                "published_date": "",
+                "package_name": "",
+                "extraData": {},
+            }
+        ],
+    }
+
+    actual = SarifConvertor().convert_to_sarif(findings)
+
+    help_text = actual["runs"][0]["tool"]["driver"]["rules"][0]["help"]["text"]
+    assert "**CWE:**" not in help_text
+    assert "**Fixed version:**" not in help_text
+    assert "**Published date:**" not in help_text
+    assert "**Package name:**" not in help_text
+    assert "**OWASP:**" not in help_text
+    assert "**Category:**" not in help_text
+    assert "**Impact:**" not in help_text
+    assert "**Confidence:**" not in help_text
+    assert "**Likelihood:**" not in help_text
+    assert "**Remediation:**" not in help_text
+    assert "**References:**" not in help_text
+
+
+def test_convert_to_sarif_alert_message_includes_all_fields():
+    findings = {
+        "total": 1,
+        "data": [
+            {
+                "avd_id": "test-rule",
+                "severity": 3,
+                "category": "sast",
+                "message": "Test message",
+                "target_file": "src/main.py",
+                "target_start_line": 42,
+                "target_end_line": 45,
+                "repository_full_name": "org/repo",
+                "reachable": False,
+                "scan_date": "2026-02-08T15:16:40.219Z",
+                "first_seen": "2025-09-17T12:46:48.271Z",
+                "scm_file": "https://github.com/org/repo/blob/abc/src/main.py",
+                "installed_version": "1.0.0",
+                "result_hash": "abc123",
+            }
+        ],
+    }
+
+    actual = SarifConvertor().convert_to_sarif(findings)
+
+    message = actual["runs"][0]["results"][0]["message"]["text"]
+    assert "Artifact: src/main.py" in message
+    assert "Type: sast" in message
+    assert "Vulnerability: test-rule" in message
+    assert "Severity: HIGH" in message
+    assert "Message: Test message" in message
+    assert "Repository: org/repo" in message
+    assert "Reachable: False" in message
+    assert "Scan date: 2026-02-08T15:16:40.219Z" in message
+    assert "First seen: 2025-09-17T12:46:48.271Z" in message
+    assert "SCM file: https://github.com/org/repo/blob/abc/src/main.py" in message
+    assert "Installed version: 1.0.0" in message
+    assert "Start line: 42" in message
+    assert "End line: 45" in message
+    assert "Alert hash: abc123" in message
+
+
+def test_convert_to_sarif_alert_message_omits_empty_optional_fields():
+    findings = {
+        "total": 1,
+        "data": [
+            {
+                "avd_id": "test-rule",
+                "severity": 2,
+                "category": "sast",
+                "message": "msg",
+                "result_hash": "hash1",
+            }
+        ],
+    }
+
+    actual = SarifConvertor().convert_to_sarif(findings)
+
+    message = actual["runs"][0]["results"][0]["message"]["text"]
+    assert "Repository:" not in message
+    assert "Reachable:" not in message
+    assert "Scan date:" not in message
+    assert "First seen:" not in message
+    assert "SCM file:" not in message
+    assert "Installed version:" not in message
+    assert "Start line:" not in message
+    assert "End line:" not in message
+
+
+# _build_message_body
+
+
+def test_build_message_body_formats_with_bold():
+    fields = [("Label", "value"), ("Empty", ""), ("Other", "data")]
+
+    actual = SarifConvertor._build_message_body(fields, bold_labels=True)
+
+    assert ["**Label:** value", "**Other:** data"] == actual
+
+
+def test_build_message_body_skips_empty_values():
+    fields = [("First", ""), ("Second", "val"), ("Third", "")]
+
+    actual = SarifConvertor._build_message_body(fields, bold_labels=True)
+
+    assert ["**Second:** val"] == actual
+
+
+# _format_list_as_markdown
+
+
+def test_format_list_as_markdown():
+    actual = SarifConvertor._format_list_as_markdown(["Item 1", "Item 2"])
+
+    assert "  - Item 1\n  - Item 2" == actual
+
+
 def test_convert_to_sarif_handles_duplicate_rules():
     findings = {
         "total": 2,
