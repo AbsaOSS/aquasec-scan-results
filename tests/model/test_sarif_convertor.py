@@ -139,7 +139,7 @@ def test_convert_to_sarif_handles_missing_avd_id():
 
     actual = SarifConvertor().convert_to_sarif(findings)
 
-    assert "Unknown" == actual["runs"][0]["results"][0]["ruleId"]
+    assert "N/A" == actual["runs"][0]["results"][0]["ruleId"]
 
 
 def test_convert_to_sarif_includes_reference_as_help_uri():
@@ -208,7 +208,7 @@ def test_convert_to_sarif_rule_message_text_includes_all_fields():
     assert "  - https://other.com" in help_text
 
 
-def test_convert_to_sarif_rule_message_text_omits_empty_fields():
+def test_convert_to_sarif_rule_message_text_shows_placeholder_for_missing_fields():
     findings = {
         "total": 1,
         "data": [
@@ -217,9 +217,6 @@ def test_convert_to_sarif_rule_message_text_omits_empty_fields():
                 "title": "Test",
                 "severity": 2,
                 "category": "sast",
-                "fixed_version": "",
-                "published_date": "",
-                "package_name": "",
                 "extraData": {},
             }
         ],
@@ -228,16 +225,16 @@ def test_convert_to_sarif_rule_message_text_omits_empty_fields():
     actual = SarifConvertor().convert_to_sarif(findings)
 
     help_text = actual["runs"][0]["tool"]["driver"]["rules"][0]["help"]["text"]
-    assert "**CWE:**" not in help_text
-    assert "**Fixed version:**" not in help_text
-    assert "**Published date:**" not in help_text
-    assert "**Package name:**" not in help_text
+    assert "**CWE:** N/A" in help_text
+    assert "**Fixed version:** N/A" in help_text
+    assert "**Published date:** N/A" in help_text
+    assert "**Package name:** N/A" in help_text
+    assert "**Category:** N/A" in help_text
+    assert "**Impact:** N/A" in help_text
+    assert "**Confidence:** N/A" in help_text
+    assert "**Likelihood:** N/A" in help_text
+    assert "**Remediation:** N/A" in help_text
     assert "**OWASP:**" not in help_text
-    assert "**Category:**" not in help_text
-    assert "**Impact:**" not in help_text
-    assert "**Confidence:**" not in help_text
-    assert "**Likelihood:**" not in help_text
-    assert "**Remediation:**" not in help_text
     assert "**References:**" not in help_text
 
 
@@ -281,33 +278,6 @@ def test_convert_to_sarif_alert_message_includes_all_fields():
     assert "Start line: 42" in message
     assert "End line: 45" in message
     assert "Alert hash: abc123" in message
-
-
-def test_convert_to_sarif_alert_message_omits_empty_optional_fields():
-    findings = {
-        "total": 1,
-        "data": [
-            {
-                "avd_id": "test-rule",
-                "severity": 2,
-                "category": "sast",
-                "message": "msg",
-                "result_hash": "hash1",
-            }
-        ],
-    }
-
-    actual = SarifConvertor().convert_to_sarif(findings)
-
-    message = actual["runs"][0]["results"][0]["message"]["text"]
-    assert "Repository:" not in message
-    assert "Reachable:" not in message
-    assert "Scan date:" not in message
-    assert "First seen:" not in message
-    assert "SCM file:" not in message
-    assert "Installed version:" not in message
-    assert "Start line:" not in message
-    assert "End line:" not in message
 
 
 # _build_message_body

@@ -36,7 +36,7 @@ FETCH_SLEEP_SECONDS = 2
 # SARIF converting
 SARIF_VERSION = "2.1.0"
 SARIF_SCHEMA_URL = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
-SARIF_PLACEHOLDER = "Unknown"
+SARIF_NA_PLACEHOLDER = "N/A"
 
 # SARIF field truncation limits
 RULE_ID_MAX_LENGTH = 512

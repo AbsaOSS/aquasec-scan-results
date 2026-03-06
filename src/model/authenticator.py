@@ -78,7 +78,7 @@ class AquaSecAuthenticator:
         method: str = "POST"
         auth_endpoint: str = AUTH_API_URL + "/v2/tokens"
         post_body: str = json.dumps(
-            {"group_id": self.group_id, "allowed_endpoints": ["GET"], "validity": 240}, separators=(",", ":")
+            {"group_id": self.group_id, "allowed_endpoints": ["ANY:*"], "validity": 240}, separators=(",", ":")
         )
         string_to_sign: str = f"{timestamp}{method}/v2/tokens{post_body}"
 
