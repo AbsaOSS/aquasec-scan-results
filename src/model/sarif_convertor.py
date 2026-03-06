@@ -139,7 +139,7 @@ class SarifConvertor:
             "name": category,
             "shortDescription": {"text": short_desc},
             "defaultConfiguration": {"level": level},
-            "helpUri": references[0] if references else "",
+            "helpUri": references[0] if references else SARIF_PLACEHOLDER,
             "help": {"text": help_text},
             "properties": {
                 "precision": "very-high",
@@ -174,15 +174,15 @@ class SarifConvertor:
             [
                 ("Type", finding_json.get("category", SARIF_PLACEHOLDER)),
                 ("Severity", severity_tag),
-                ("CWE", extra_data.get("cwe", "")),
-                ("Fixed version", finding_json.get("fixed_version", "")),
-                ("Published date", finding_json.get("published_date", "")),
-                ("Package name", finding_json.get("package_name", "")),
-                ("Category", extra_data.get("category", "")),
-                ("Impact", extra_data.get("impact", "")),
-                ("Confidence", extra_data.get("confidence", "")),
-                ("Likelihood", extra_data.get("likelihood", "")),
-                ("Remediation", extra_data.get("remediation", "")),
+                ("CWE", extra_data.get("cwe", SARIF_PLACEHOLDER)),
+                ("Fixed version", finding_json.get("fixed_version", SARIF_PLACEHOLDER)),
+                ("Published date", finding_json.get("published_date", SARIF_PLACEHOLDER)),
+                ("Package name", finding_json.get("package_name", SARIF_PLACEHOLDER)),
+                ("Category", extra_data.get("category", SARIF_PLACEHOLDER)),
+                ("Impact", extra_data.get("impact", SARIF_PLACEHOLDER)),
+                ("Confidence", extra_data.get("confidence", SARIF_PLACEHOLDER)),
+                ("Likelihood", extra_data.get("likelihood", SARIF_PLACEHOLDER)),
+                ("Remediation", extra_data.get("remediation", SARIF_PLACEHOLDER)),
             ],
             bold_labels=True,
         )
@@ -214,7 +214,7 @@ class SarifConvertor:
         severity = finding_json.get("severity", 1)
         level = self._map_severity_to_level(severity)
         category = finding_json.get("category", SARIF_PLACEHOLDER)
-        target_file = finding_json.get("target_file", "")
+        target_file = finding_json.get("target_file", SARIF_PLACEHOLDER)
 
         logger.debug(
             "Building a finding in category `%s` that targets a file `%s` (rule: `%s`).",
@@ -257,19 +257,19 @@ class SarifConvertor:
 
         message = self._build_message_body(
             [
-                ("Artifact", finding_json.get("target_file", "")),
+                ("Artifact", finding_json.get("target_file", SARIF_PLACEHOLDER)),
                 ("Type", finding_json.get("category", SARIF_PLACEHOLDER)),
                 ("Vulnerability", rule_id),
                 ("Severity", self._get_severity_tag(severity)),
-                ("Message", finding_json.get("message", "")),
-                ("Repository", finding_json.get("repository_full_name", "")),
-                ("Reachable", str(reachable) if reachable is not None else ""),
-                ("Scan date", finding_json.get("scan_date", "")),
-                ("First seen", finding_json.get("first_seen", "")),
-                ("SCM file", finding_json.get("scm_file", "")),
-                ("Installed version", finding_json.get("installed_version", "")),
-                ("Start line", str(start_line) if start_line else ""),
-                ("End line", str(end_line) if end_line else ""),
+                ("Message", finding_json.get("message", SARIF_PLACEHOLDER)),
+                ("Repository", finding_json.get("repository_full_name", SARIF_PLACEHOLDER)),
+                ("Reachable", str(reachable) if reachable is not None else SARIF_PLACEHOLDER),
+                ("Scan date", finding_json.get("scan_date", SARIF_PLACEHOLDER)),
+                ("First seen", finding_json.get("first_seen", SARIF_PLACEHOLDER)),
+                ("SCM file", finding_json.get("scm_file", SARIF_PLACEHOLDER)),
+                ("Installed version", finding_json.get("installed_version", SARIF_PLACEHOLDER)),
+                ("Start line", str(start_line) if start_line else SARIF_PLACEHOLDER),
+                ("End line", str(end_line) if end_line else SARIF_PLACEHOLDER),
                 ("Alert hash", finding_json.get("result_hash", SARIF_PLACEHOLDER)),
             ],
             bold_labels=False,
@@ -289,7 +289,7 @@ class SarifConvertor:
         Returns:
             SARIF location dictionary, or None if no target file.
         """
-        target_file = finding_json.get("target_file", "")
+        target_file = finding_json.get("target_file", SARIF_PLACEHOLDER)
         if not target_file:
             return None
 
@@ -334,10 +334,11 @@ class SarifConvertor:
         for label, value in fields:
             if not value:
                 continue
+            sanitized = " ".join(value.replace("\n", " ").split())
             if bold_labels:
-                parts.append(f"**{label}:** {value}")
+                parts.append(f"**{label}:** {sanitized}")
             else:
-                parts.append(f"{label}: {value}")
+                parts.append(f"{label}: {sanitized}")
 
         return parts
 
