@@ -27,7 +27,7 @@ from src.utils.constants import (
     RULE_ID_MAX_LENGTH,
     TITLE_MAX_LENGTH,
     LONG_TEXT_MAX_LENGTH,
-    SARIF_PLACEHOLDER,
+    SARIF_NA_PLACEHOLDER,
 )
 
 logger = logging.getLogger(__name__)
@@ -118,18 +118,18 @@ class SarifConvertor:
         Returns:
             SARIF rule dictionary.
         """
-        rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
+        rule_id = finding_json.get("avd_id", SARIF_NA_PLACEHOLDER)
         rule_id = self._truncate_text(rule_id, RULE_ID_MAX_LENGTH)
         logger.debug("Building a new security rule in SARIF format (rule id: %s).", rule_id)
 
-        title = finding_json.get("title", SARIF_PLACEHOLDER)
+        title = finding_json.get("title", SARIF_NA_PLACEHOLDER)
         short_desc = self._truncate_text(title, TITLE_MAX_LENGTH)
 
         severity = finding_json.get("severity", 1)
         level = self._map_severity_to_level(severity)
         security_severity = self._map_severity_to_score(severity)
         severity_tag = self._get_severity_tag(severity)
-        category = finding_json.get("category", SARIF_PLACEHOLDER)
+        category = finding_json.get("category", SARIF_NA_PLACEHOLDER)
         references = finding_json.get("extraData", {}).get("references", [])
 
         help_text = self._build_rule_message_text(finding_json)
@@ -139,7 +139,7 @@ class SarifConvertor:
             "name": category,
             "shortDescription": {"text": short_desc},
             "defaultConfiguration": {"level": level},
-            "helpUri": references[0] if references else SARIF_PLACEHOLDER,
+            "helpUri": references[0] if references else SARIF_NA_PLACEHOLDER,
             "help": {"text": help_text},
             "properties": {
                 "precision": "very-high",
@@ -162,7 +162,7 @@ class SarifConvertor:
         Returns:
             Formatted markdown message body string.
         """
-        rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
+        rule_id = finding_json.get("avd_id", SARIF_NA_PLACEHOLDER)
         rule_id = self._truncate_text(rule_id, RULE_ID_MAX_LENGTH)
         severity_tag = self._get_severity_tag(finding_json.get("severity", 1))
         extra_data = finding_json.get("extraData", {})
@@ -172,17 +172,17 @@ class SarifConvertor:
         message_header = [f"**{rule_id}**"]
         message_body = self._build_message_body(
             [
-                ("Type", finding_json.get("category", SARIF_PLACEHOLDER)),
+                ("Type", finding_json.get("category", SARIF_NA_PLACEHOLDER)),
                 ("Severity", severity_tag),
-                ("CWE", extra_data.get("cwe", SARIF_PLACEHOLDER)),
-                ("Fixed version", finding_json.get("fixed_version", SARIF_PLACEHOLDER)),
-                ("Published date", finding_json.get("published_date", SARIF_PLACEHOLDER)),
-                ("Package name", finding_json.get("package_name", SARIF_PLACEHOLDER)),
-                ("Category", extra_data.get("category", SARIF_PLACEHOLDER)),
-                ("Impact", extra_data.get("impact", SARIF_PLACEHOLDER)),
-                ("Confidence", extra_data.get("confidence", SARIF_PLACEHOLDER)),
-                ("Likelihood", extra_data.get("likelihood", SARIF_PLACEHOLDER)),
-                ("Remediation", extra_data.get("remediation", SARIF_PLACEHOLDER)),
+                ("CWE", extra_data.get("cwe", SARIF_NA_PLACEHOLDER)),
+                ("Fixed version", finding_json.get("fixed_version", SARIF_NA_PLACEHOLDER)),
+                ("Published date", finding_json.get("published_date", SARIF_NA_PLACEHOLDER)),
+                ("Package name", finding_json.get("package_name", SARIF_NA_PLACEHOLDER)),
+                ("Category", extra_data.get("category", SARIF_NA_PLACEHOLDER)),
+                ("Impact", extra_data.get("impact", SARIF_NA_PLACEHOLDER)),
+                ("Confidence", extra_data.get("confidence", SARIF_NA_PLACEHOLDER)),
+                ("Likelihood", extra_data.get("likelihood", SARIF_NA_PLACEHOLDER)),
+                ("Remediation", extra_data.get("remediation", SARIF_NA_PLACEHOLDER)),
             ],
             bold_labels=True,
         )
@@ -208,13 +208,13 @@ class SarifConvertor:
         Returns:
             Security finding in SARIF format.
         """
-        rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
+        rule_id = finding_json.get("avd_id", SARIF_NA_PLACEHOLDER)
         rule_id = self._truncate_text(rule_id, RULE_ID_MAX_LENGTH)
 
         severity = finding_json.get("severity", 1)
         level = self._map_severity_to_level(severity)
-        category = finding_json.get("category", SARIF_PLACEHOLDER)
-        target_file = finding_json.get("target_file", SARIF_PLACEHOLDER)
+        category = finding_json.get("category", SARIF_NA_PLACEHOLDER)
+        target_file = finding_json.get("target_file", SARIF_NA_PLACEHOLDER)
 
         logger.debug(
             "Building a finding in category `%s` that targets a file `%s` (rule: `%s`).",
@@ -248,7 +248,7 @@ class SarifConvertor:
         Returns:
             Formatted message text string.
         """
-        rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
+        rule_id = finding_json.get("avd_id", SARIF_NA_PLACEHOLDER)
         rule_id = self._truncate_text(rule_id, RULE_ID_MAX_LENGTH)
         severity = finding_json.get("severity", 1)
         reachable = finding_json.get("reachable", None)
@@ -257,20 +257,20 @@ class SarifConvertor:
 
         message = self._build_message_body(
             [
-                ("Artifact", finding_json.get("target_file", SARIF_PLACEHOLDER)),
-                ("Type", finding_json.get("category", SARIF_PLACEHOLDER)),
+                ("Artifact", finding_json.get("target_file", SARIF_NA_PLACEHOLDER)),
+                ("Type", finding_json.get("category", SARIF_NA_PLACEHOLDER)),
                 ("Vulnerability", rule_id),
                 ("Severity", self._get_severity_tag(severity)),
-                ("Message", finding_json.get("message", SARIF_PLACEHOLDER)),
-                ("Repository", finding_json.get("repository_full_name", SARIF_PLACEHOLDER)),
-                ("Reachable", str(reachable) if reachable is not None else SARIF_PLACEHOLDER),
-                ("Scan date", finding_json.get("scan_date", SARIF_PLACEHOLDER)),
-                ("First seen", finding_json.get("first_seen", SARIF_PLACEHOLDER)),
-                ("SCM file", finding_json.get("scm_file", SARIF_PLACEHOLDER)),
-                ("Installed version", finding_json.get("installed_version", SARIF_PLACEHOLDER)),
-                ("Start line", str(start_line) if start_line else SARIF_PLACEHOLDER),
-                ("End line", str(end_line) if end_line else SARIF_PLACEHOLDER),
-                ("Alert hash", finding_json.get("result_hash", SARIF_PLACEHOLDER)),
+                ("Message", finding_json.get("message", SARIF_NA_PLACEHOLDER)),
+                ("Repository", finding_json.get("repository_full_name", SARIF_NA_PLACEHOLDER)),
+                ("Reachable", str(reachable) if reachable is not None else SARIF_NA_PLACEHOLDER),
+                ("Scan date", finding_json.get("scan_date", SARIF_NA_PLACEHOLDER)),
+                ("First seen", finding_json.get("first_seen", SARIF_NA_PLACEHOLDER)),
+                ("SCM file", finding_json.get("scm_file", SARIF_NA_PLACEHOLDER)),
+                ("Installed version", finding_json.get("installed_version", SARIF_NA_PLACEHOLDER)),
+                ("Start line", str(start_line) if start_line else SARIF_NA_PLACEHOLDER),
+                ("End line", str(end_line) if end_line else SARIF_NA_PLACEHOLDER),
+                ("Alert hash", finding_json.get("result_hash", SARIF_NA_PLACEHOLDER)),
             ],
             bold_labels=False,
         )
@@ -289,7 +289,7 @@ class SarifConvertor:
         Returns:
             SARIF location dictionary, or None if no target file.
         """
-        target_file = finding_json.get("target_file", SARIF_PLACEHOLDER)
+        target_file = finding_json.get("target_file", "")
         if not target_file:
             return None
 
@@ -373,7 +373,7 @@ class SarifConvertor:
         rule_indexes: dict[str, int] = {}
 
         for finding_json in self.findings_json:
-            rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
+            rule_id = finding_json.get("avd_id", SARIF_NA_PLACEHOLDER)
             rule_id = self._truncate_text(str(rule_id), RULE_ID_MAX_LENGTH)
 
             if rule_id not in rules_dict:
@@ -386,7 +386,7 @@ class SarifConvertor:
         # Build result findings output
         findings = []
         for finding_json in self.findings_json:
-            rule_id = finding_json.get("avd_id", SARIF_PLACEHOLDER)
+            rule_id = finding_json.get("avd_id", SARIF_NA_PLACEHOLDER)
             rule_id = self._truncate_text(str(rule_id), RULE_ID_MAX_LENGTH)
             rule_index = rule_indexes.get(rule_id, 0)
             findings.append(self._build_sarif_finding(finding_json, rule_index))
