@@ -188,7 +188,6 @@ def test_convert_to_sarif_rule_message_text_includes_all_fields():
     actual = SarifConvertor().convert_to_sarif(findings)
 
     help_text = actual["runs"][0]["tool"]["driver"]["rules"][0]["help"]["text"]
-    assert "**test-rule**" in help_text
     assert "**Type:** sast" in help_text
     assert "**Severity:** HIGH" in help_text
     assert "**CWE:** CWE-295" in help_text
@@ -234,8 +233,8 @@ def test_convert_to_sarif_rule_message_text_shows_placeholder_for_missing_fields
     assert "**Confidence:** N/A" in help_text
     assert "**Likelihood:** N/A" in help_text
     assert "**Remediation:** N/A" in help_text
-    assert "**OWASP:**" not in help_text
-    assert "**References:**" not in help_text
+    assert "**OWASP:** N/A" in help_text
+    assert "**References:** N/A" in help_text
 
 
 def test_convert_to_sarif_alert_message_includes_all_fields():

@@ -139,7 +139,7 @@ class SarifConvertor:
             "name": category,
             "shortDescription": {"text": short_desc},
             "defaultConfiguration": {"level": level},
-            "helpUri": references[0] if references else SARIF_NA_PLACEHOLDER,
+            "helpUri": references[0] if references else "",
             "help": {"text": help_text},
             "properties": {
                 "precision": "very-high",
@@ -162,15 +162,12 @@ class SarifConvertor:
         Returns:
             Formatted markdown message body string.
         """
-        rule_id = finding_json.get("avd_id", SARIF_NA_PLACEHOLDER)
-        rule_id = self._truncate_text(rule_id, RULE_ID_MAX_LENGTH)
         severity_tag = self._get_severity_tag(finding_json.get("severity", 1))
         extra_data = finding_json.get("extraData", {})
         owasp = extra_data.get("owasp", [])
         references = extra_data.get("references", [])
 
-        message_header = [f"**{rule_id}**"]
-        message_body = self._build_message_body(
+        message = self._build_message_body(
             [
                 ("Type", finding_json.get("category", SARIF_NA_PLACEHOLDER)),
                 ("Severity", severity_tag),
@@ -187,13 +184,15 @@ class SarifConvertor:
             bold_labels=True,
         )
 
-        message = message_header + message_body
-
         if owasp:
             message.append(f"\n**OWASP:**\n{self._format_list_as_markdown(owasp)}")
+        else:
+            message.append(f"**OWASP:** {SARIF_NA_PLACEHOLDER}")
 
         if references:
             message.append(f"\n**References:**\n{self._format_list_as_markdown(references)}")
+        else:
+            message.append(f"**References:** {SARIF_NA_PLACEHOLDER}")
 
         return "\n".join(message)
 
