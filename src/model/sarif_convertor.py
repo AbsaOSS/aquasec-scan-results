@@ -139,7 +139,6 @@ class SarifConvertor:
             "name": category,
             "shortDescription": {"text": short_desc},
             "defaultConfiguration": {"level": level},
-            "helpUri": references[0] if references else "",
             "help": {"text": help_text},
             "properties": {
                 "precision": "very-high",
@@ -147,6 +146,9 @@ class SarifConvertor:
                 "tags": [category, "security", severity_tag],
             },
         }
+
+        if references:
+            rule["helpUri"] = references[0]
 
         logger.debug("Created a new `%s` rule with id `%s`.", category, rule_id)
 
