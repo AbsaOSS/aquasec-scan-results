@@ -26,7 +26,6 @@ from src.utils.constants import (
     SARIF_VERSION,
     RULE_ID_MAX_LENGTH,
     TITLE_MAX_LENGTH,
-    LONG_TEXT_MAX_LENGTH,
     SARIF_NA_PLACEHOLDER,
 )
 
@@ -156,13 +155,13 @@ class SarifConvertor:
 
     def _build_rule_message_text(self, finding_json: Finding) -> str:
         """
-        Build markdown message content for a SARIF rule.
+        Build Markdown message content for a SARIF rule.
 
         Args:
             finding_json: AquaSec finding dictionary.
 
         Returns:
-            Formatted markdown message body string.
+            Formatted Markdown message body string.
         """
         severity_tag = self._get_severity_tag(finding_json.get("severity", 1))
         extra_data = finding_json.get("extraData", {})
@@ -258,11 +257,11 @@ class SarifConvertor:
 
         message = self._build_message_body(
             [
+                ("Alert hash", finding_json.get("result_hash", SARIF_NA_PLACEHOLDER)),
                 ("Artifact", finding_json.get("target_file", SARIF_NA_PLACEHOLDER)),
                 ("Type", finding_json.get("category", SARIF_NA_PLACEHOLDER)),
                 ("Vulnerability", rule_id),
                 ("Severity", self._get_severity_tag(severity)),
-                ("Message", finding_json.get("message", SARIF_NA_PLACEHOLDER)),
                 ("Repository", finding_json.get("repository_full_name", SARIF_NA_PLACEHOLDER)),
                 ("Reachable", str(reachable) if reachable is not None else SARIF_NA_PLACEHOLDER),
                 ("Scan date", finding_json.get("scan_date", SARIF_NA_PLACEHOLDER)),
@@ -271,13 +270,12 @@ class SarifConvertor:
                 ("Installed version", finding_json.get("installed_version", SARIF_NA_PLACEHOLDER)),
                 ("Start line", str(start_line) if start_line else SARIF_NA_PLACEHOLDER),
                 ("End line", str(end_line) if end_line else SARIF_NA_PLACEHOLDER),
-                ("Alert hash", finding_json.get("result_hash", SARIF_NA_PLACEHOLDER)),
+                ("Message", finding_json.get("message", SARIF_NA_PLACEHOLDER)),
             ],
             bold_labels=False,
         )
 
-        message_text = "\n".join(message)
-        return self._truncate_text(message_text, LONG_TEXT_MAX_LENGTH)
+        return "\n".join(message)
 
     @staticmethod
     def _build_finding_location(finding_json: Finding) -> dict[str, Any] | None:
@@ -346,7 +344,7 @@ class SarifConvertor:
     @staticmethod
     def _format_list_as_markdown(items: list[str]) -> str:
         """
-        Format list items as indented markdown bullet points.
+        Format list items as indented Markdown bullet points.
 
         Args:
             items: List of strings to format.
