@@ -29,3 +29,4 @@ Thumbs.db
 *.tmp
 *.log
 run_script.sh
+run_developer_scan.sh
