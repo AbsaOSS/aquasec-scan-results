@@ -130,8 +130,6 @@ class ScanTrigger:
 
             time.sleep(POLL_INTERVAL)
             elapsed += POLL_INTERVAL
-            logger.info(
-                "AquaSec Scan Results - Polling for scan completion again... (%ds/%ds).", elapsed, POLL_TIMEOUT
-            )
+            logger.info("AquaSec Scan Results - Polling for scan completion again... (%ds/%ds).", elapsed, POLL_TIMEOUT)
 
         raise ValueError(f"Scan did not complete within {POLL_TIMEOUT}s for branch '{branch}'.")
