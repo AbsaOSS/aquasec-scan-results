@@ -85,7 +85,7 @@ class ScanTrigger:
             ValueError: If scan fails or times out.
         """
         logger.info(
-            "AquaSec Scan Results - Pulling for scan completion (interval %ds, timeout %ds).",
+            "AquaSec Scan Results - Polling for scan completion (interval %ds, timeout %ds).",
             POLL_INTERVAL,
             POLL_TIMEOUT,
         )
@@ -100,7 +100,7 @@ class ScanTrigger:
                 f"?page=1&page_size=10&order_by=-scan_date&branch_name={encoded_branch}"
             )
 
-            response = requests.get(poll_url, headers=headers, timeout=HTTP_TIMEOUT)
+            response = requests.get(poll_url, headers=headers, timeout=HTTP_TIMEOUT, verify=False)
 
             if response.status_code < 200 or response.status_code >= 300:
                 logger.warning(
@@ -131,7 +131,7 @@ class ScanTrigger:
             time.sleep(POLL_INTERVAL)
             elapsed += POLL_INTERVAL
             logger.info(
-                "AquaSec Scan Results - Polling for scan completion next try... (%ds/%ds).", elapsed, POLL_TIMEOUT
+                "AquaSec Scan Results - Polling for scan completion again... (%ds/%ds).", elapsed, POLL_TIMEOUT
             )
 
         raise ValueError(f"Scan did not complete within {POLL_TIMEOUT}s for branch '{branch}'.")
