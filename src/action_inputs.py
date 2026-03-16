@@ -22,7 +22,7 @@ the inputs required for running a GitHub Action from environment variables.
 import logging
 import re
 
-from src.utils.constants import AQUA_KEY, AQUA_SECRET, GROUP_ID, REPOSITORY_ID
+from src.utils.constants import AQUA_KEY, AQUA_SECRET, DEV_BRANCH_COMPARISON, GROUP_ID, REPOSITORY_ID
 from src.utils.utils import get_action_input
 
 logger = logging.getLogger(__name__)
@@ -75,6 +75,16 @@ class ActionInputs:
         return get_action_input(REPOSITORY_ID)
 
     @staticmethod
+    def _get_dev_branch_comparison() -> str:
+        """
+        Getter of the dev branch comparison flag.
+
+        Returns:
+            The dev branch comparison flag as a string.
+        """
+        return get_action_input(DEV_BRANCH_COMPARISON)
+
+    @staticmethod
     def _is_valid_uuid(uuid_string: str) -> bool:
         """
         Validates if the given string is a valid UUID format.
@@ -123,6 +133,12 @@ class ActionInputs:
             error_count += 1
         elif not self._is_valid_uuid(repository_id):
             logger.error("REPOSITORY_ID: str - invalid UUID format.")
+            error_count += 1
+
+        ## Dev Branch Comparison
+        dev_branch_comparison: str = self._get_dev_branch_comparison()
+        if dev_branch_comparison.lower() not in ("true", "false", ""):
+            logger.error("DEV_BRANCH_COMPARISON: str - must be 'true' or 'false'.")
             error_count += 1
 
         if error_count > 0:

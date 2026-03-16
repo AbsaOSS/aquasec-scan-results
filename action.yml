@@ -22,11 +22,21 @@ inputs:
     description: 'Enable or disable verbose logging'
     required: false
     default: 'false'
+  dev-branch-comparison:
+    description: 'Enable developer branch comparison modes'
+    required: false
+    default: 'false'
 
 outputs:
-  aquasec-sarif-file:
-    description: 'Full path to the generated SARIF file'
-    value: ${{ steps.aquasec-scan-results.outputs.aquasec-sarif-file }}
+  nightscan-sarif-file:
+    description: 'Full path to the generated SARIF file from the night scan'
+    value: ${{ steps.aquasec-scan-results.outputs.nightscan-sarif-file }}
+  comparison-sarif-file:
+    description: 'Full path to the generated SARIF file with new security findings from branch comparison'
+    value: ${{ steps.aquasec-scan-results.outputs.comparison-sarif-file }}
+  comparison-summary-file:
+    description: 'Full path to the comparison summary file'
+    value: ${{ steps.aquasec-scan-results.outputs.comparison-summary-file }}
 
 runs:
   using: 'composite'
@@ -47,6 +57,7 @@ runs:
         echo "INPUT_GROUP_ID=${{ inputs.group-id }}" >> $GITHUB_ENV
         echo "INPUT_REPOSITORY_ID=${{ inputs.repository-id }}" >> $GITHUB_ENV
         echo "INPUT_VERBOSE_LOGGING=${{ inputs.verbose-logging }}" >> $GITHUB_ENV
+        echo "INPUT_DEV_BRANCH_COMPARISON=${{ inputs.dev-branch-comparison }}" >> $GITHUB_ENV
       shell: bash
 
     - name: Run AquaSec Scan Results action
@@ -57,6 +68,7 @@ runs:
         INPUT_GROUP_ID: ${{ env.INPUT_GROUP_ID }}
         INPUT_REPOSITORY_ID: ${{ env.INPUT_REPOSITORY_ID }}
         INPUT_VERBOSE_LOGGING: ${{ env.INPUT_VERBOSE_LOGGING }}
+        INPUT_DEV_BRANCH_COMPARISON: ${{ env.INPUT_DEV_BRANCH_COMPARISON }}
       run: |
         export PYTHONPATH="${PYTHONPATH}:${{ github.action_path }}"
         python3 ${{ github.action_path }}/main.py

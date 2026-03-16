@@ -33,6 +33,7 @@ def mock_main_setup(mocker):
     mocker.patch("main.ActionInputs.validate", return_value=True)
     mocker.patch("main.AquaSecAuthenticator.authenticate", return_value="test_token")
     mocker.patch("main.set_action_output")
+    mocker.patch("main.get_action_input", return_value="")
 
 
 @pytest.fixture
@@ -42,6 +43,7 @@ def mock_valid_action_inputs(mocker):
     mocker.patch.object(ActionInputs, "_get_aquasec_secret", return_value="valid_secret")
     mocker.patch.object(ActionInputs, "_get_group_id", return_value="1234")
     mocker.patch.object(ActionInputs, "_get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
+    mocker.patch.object(ActionInputs, "_get_dev_branch_comparison", return_value="false")
 
 
 @pytest.fixture

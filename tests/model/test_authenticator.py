@@ -75,3 +75,16 @@ def test_authenticate_raises_value_error_when_token_missing(mocker):
         AquaSecAuthenticator().authenticate()
 
     assert "missing bearer token" in str(exc_info.value)
+
+
+def test_authenticate_uses_any_wildcard_endpoint(mocker):
+    mocker.patch("src.model.authenticator.get_action_input", side_effect=["test_key", "test_secret", "1234"])
+    mock_response = mocker.Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"data": "bearer_token_123"}
+    mock_post = mocker.patch("src.model.authenticator.requests.post", return_value=mock_response)
+
+    AquaSecAuthenticator().authenticate()
+
+    post_body = mock_post.call_args[1]["data"]
+    assert '"ANY:*"' in post_body

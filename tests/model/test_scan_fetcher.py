@@ -116,3 +116,41 @@ def test_fetch_findings_uses_correct_request_structure(mocker):
     assert "abc12345-e89b-12d3-a456-426614174000" in call_args[0][0]
     assert "size=100" in call_args[0][0]
     assert "page=1" in call_args[0][0]
+
+
+# fetch_findings with scan_id
+
+
+def test_fetch_findings_with_scan_id_uses_scan_ids_param(mocker):
+    fetcher = ScanFetcher("test_token")
+    mock_response = mocker.Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"total": 1, "data": [{"id": 1}]}
+    mock_get = mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
+
+    actual = fetcher.fetch_findings(scan_id="scan-abc-123")
+
+    assert 1 == actual["total"]
+    call_url = mock_get.call_args[0][0]
+    assert "scanIds=scan-abc-123" in call_url
+    assert "repositoryIds" not in call_url
+
+
+def test_fetch_findings_with_scan_id_paginates(mocker):
+    fetcher = ScanFetcher("test_token")
+
+    mock_response_page1 = mocker.Mock()
+    mock_response_page1.status_code = 200
+    mock_response_page1.json.return_value = {"total": 3, "data": [{"id": 1}, {"id": 2}]}
+
+    mock_response_page2 = mocker.Mock()
+    mock_response_page2.status_code = 200
+    mock_response_page2.json.return_value = {"total": 3, "data": [{"id": 3}]}
+
+    mocker.patch("src.model.scan_fetcher.requests.get", side_effect=[mock_response_page1, mock_response_page2])
+    mocker.patch("src.model.scan_fetcher.time.sleep")
+
+    actual = fetcher.fetch_findings(scan_id="scan-abc-123")
+
+    assert 3 == actual["total"]
+    assert 3 == len(actual["data"])

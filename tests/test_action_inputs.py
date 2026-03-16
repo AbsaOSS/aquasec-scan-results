@@ -102,3 +102,14 @@ def test_is_valid_uuid_returns_false_for_empty_string():
     actual = ActionInputs._is_valid_uuid(empty_string)
 
     assert actual is False
+
+
+# _get_dev_branch_comparison
+
+
+def test_get_dev_branch_comparison_returns_value(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="true")
+
+    actual = ActionInputs._get_dev_branch_comparison()
+
+    assert "true" == actual
