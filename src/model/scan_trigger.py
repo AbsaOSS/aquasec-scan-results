@@ -100,7 +100,7 @@ class ScanTrigger:
                 f"?page=1&page_size=10&order_by=-scan_date&branch_name={encoded_branch}"
             )
 
-            response = requests.get(poll_url, headers=headers, timeout=HTTP_TIMEOUT, verify=False)
+            response = requests.get(poll_url, headers=headers, timeout=HTTP_TIMEOUT)
 
             if response.status_code < 200 or response.status_code >= 300:
                 logger.warning(
