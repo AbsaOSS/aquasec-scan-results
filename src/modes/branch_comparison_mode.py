@@ -18,12 +18,10 @@
 This module implements the developer branch comparison flow for AquaSec scan results.
 """
 
-import json
 import logging
 import os
 
 from src.model.branch_comparator import BranchComparator
-from src.model.sarif_convertor import SarifConvertor
 from src.model.scan_fetcher import ScanFetcher
 from src.model.scan_trigger import ScanTrigger
 from src.utils.constants import REPOSITORY_ID
@@ -39,15 +37,13 @@ class BranchComparisonMode:
 
     def __init__(self, bearer_token: str) -> None:
         self.bearer_token = bearer_token
-        self.summary_file: str | None = None
-        self.new_findings_sarif: str | None = None
 
-    def run(self) -> dict[str, str | None]:
+    def run(self) -> str:
         """
         Run the developer branch/master comparison flow.
 
         Returns:
-            Dictionary with paths to summary comparison comment and new security alerts if any.
+            Absolute path to the generated comparison summary Markdown file.
         Raises:
             ValueError: If GITHUB_HEAD_REF is not set or API returns invalid response.
         """
@@ -69,32 +65,10 @@ class BranchComparisonMode:
         findings_comparison = comparator.compare()
         summary = comparator.build_comparison_summary(findings_comparison)
 
-        # Saving comparison Markdown summary
-        self.summary_file = os.path.abspath("comparison_summary.md")
-        with open(self.summary_file, "w", encoding="utf-8") as md_file:
+        # Save comparison Markdown summary
+        summary_file = os.path.abspath("comparison_summary.md")
+        with open(summary_file, "w", encoding="utf-8") as md_file:
             md_file.write(summary)
-        logger.info("AquaSec Scan Results - Comparison summary saved in `%s`.", self.summary_file)
+        logger.info("AquaSec Scan Results - Comparison summary saved in `%s`.", summary_file)
 
-        # Saving new security findings in SARIF format if any
-        self._save_new_findings_sarif(findings_comparison["new_findings"])
-
-        return {
-            "summary_file": self.summary_file,
-            "new_findings_sarif": self.new_findings_sarif,
-        }
-
-    def _save_new_findings_sarif(self, new_findings: list[dict]) -> None:
-        """Save new findings as a SARIF file when present."""
-        if not new_findings:
-            return
-
-        new_findings_json = {"total": len(new_findings), "data": new_findings}
-        sarif_data = SarifConvertor().convert_to_sarif(new_findings_json)
-
-        self.new_findings_sarif = os.path.abspath("new_findings.sarif")
-        with open(self.new_findings_sarif, "w", encoding="utf-8") as sarif_file:
-            json.dump(sarif_data, sarif_file, indent=2)
-        logger.info(
-            "AquaSec Scan Results - New findings SARIF file saved in `%s`.",
-            self.new_findings_sarif,
-        )
+        return summary_file

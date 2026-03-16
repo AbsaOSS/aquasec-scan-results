@@ -31,11 +31,8 @@ outputs:
   nightscan-sarif-file:
     description: 'Full path to the generated SARIF file from the night scan'
     value: ${{ steps.aquasec-scan-results.outputs.nightscan-sarif-file }}
-  comparison-sarif-file:
-    description: 'Full path to the generated SARIF file with new security findings from branch comparison'
-    value: ${{ steps.aquasec-scan-results.outputs.comparison-sarif-file }}
   comparison-summary-file:
-    description: 'Full path to the comparison summary file'
+    description: 'Full path to the comparison summary Markdown file'
     value: ${{ steps.aquasec-scan-results.outputs.comparison-summary-file }}
 
 runs:

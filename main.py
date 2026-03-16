@@ -59,10 +59,8 @@ def run() -> None:
     # AquaSec modes run
     try:
         if branch_comparison_mode == "true":
-            comparison_output = BranchComparisonMode(bearer_token).run()
-            set_action_output("comparison-summary-file", str(comparison_output["summary_file"]))
-            if comparison_output["new_findings_sarif"]:
-                set_action_output("comparison-sarif-file", str(comparison_output["new_findings_sarif"]))
+            summary_file = BranchComparisonMode(bearer_token).run()
+            set_action_output("comparison-summary-file", summary_file)
         else:
             sarif_filepath = NightScanMode(bearer_token).run()
             set_action_output("nightscan-sarif-file", sarif_filepath)

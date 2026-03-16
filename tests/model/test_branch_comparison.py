@@ -26,53 +26,22 @@ from src.modes.branch_comparison_mode import BranchComparisonMode
 # run
 
 
-def test_run_returns_sarif_when_new_findings(mocker, monkeypatch):
+def test_run_returns_summary_filepath(mocker, monkeypatch):
     monkeypatch.setenv("GITHUB_HEAD_REF", "feature/test")
     mocker.patch("src.modes.branch_comparison_mode.get_action_input", return_value="repo-123")
     mock_trigger = mocker.patch("src.modes.branch_comparison_mode.ScanTrigger")
     mock_trigger.return_value.trigger_and_get_scan_id.return_value = "scan-id-123"
     mock_fetcher = mocker.patch("src.modes.branch_comparison_mode.ScanFetcher")
-    dev_findings = {"total": 2, "data": [{"id": 1, "result_hash": "h1"}, {"id": 2, "result_hash": "h2"}]}
-    master_findings = {"total": 1, "data": [{"id": 1, "result_hash": "h1"}]}
-    mock_fetcher.return_value.fetch_findings.side_effect = [dev_findings, master_findings]
+    mock_fetcher.return_value.fetch_findings.side_effect = [{"data": []}, {"data": []}]
     mock_comparator = mocker.patch("src.modes.branch_comparison_mode.BranchComparator")
-    mock_comparator.return_value.compare.return_value = {
-        "new_findings": [{"id": 2, "result_hash": "h2"}],
-        "reduced_findings": [],
-    }
+    mock_comparator.return_value.compare.return_value = {"new_findings": [], "reduced_findings": []}
     mock_comparator.return_value.build_comparison_summary.return_value = "## Summary"
-    mocker.patch("src.modes.branch_comparison_mode.SarifConvertor")
     mocker.patch("builtins.open", mocker.mock_open())
-    mocker.patch("src.modes.branch_comparison_mode.json.dump")
-    mocker.patch("src.modes.branch_comparison_mode.os.path.abspath", return_value="/abs/path/file")
+    mocker.patch("src.modes.branch_comparison_mode.os.path.abspath", return_value="/abs/path/comparison_summary.md")
 
     actual = BranchComparisonMode("test_token").run()
 
-    assert "/abs/path/file" == actual["summary_file"]
-    assert "/abs/path/file" == actual["new_findings_sarif"]
-
-
-def test_run_returns_none_sarif_when_no_new_findings(mocker, monkeypatch):
-    monkeypatch.setenv("GITHUB_HEAD_REF", "feature/test")
-    mocker.patch("src.modes.branch_comparison_mode.get_action_input", return_value="repo-123")
-    mock_trigger = mocker.patch("src.modes.branch_comparison_mode.ScanTrigger")
-    mock_trigger.return_value.trigger_and_get_scan_id.return_value = "scan-id-123"
-    mock_fetcher = mocker.patch("src.modes.branch_comparison_mode.ScanFetcher")
-    findings = {"total": 1, "data": [{"id": 1, "result_hash": "h1"}]}
-    mock_fetcher.return_value.fetch_findings.side_effect = [findings, findings]
-    mock_comparator = mocker.patch("src.modes.branch_comparison_mode.BranchComparator")
-    mock_comparator.return_value.compare.return_value = {
-        "new_findings": [],
-        "reduced_findings": [],
-    }
-    mock_comparator.return_value.build_comparison_summary.return_value = "## No diff"
-    mocker.patch("builtins.open", mocker.mock_open())
-    mocker.patch("src.modes.branch_comparison_mode.os.path.abspath", return_value="/abs/path/file")
-
-    actual = BranchComparisonMode("test_token").run()
-
-    assert "/abs/path/file" == actual["summary_file"]
-    assert actual["new_findings_sarif"] is None
+    assert "/abs/path/comparison_summary.md" == actual
 
 
 def test_run_raises_when_github_head_ref_not_set(monkeypatch):

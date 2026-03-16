@@ -19,7 +19,6 @@ This module implements branch comparison logic for AquaSec scan findings.
 """
 
 import logging
-import os
 from typing import Any
 
 from src.utils.constants import SEVERITY_MAP, SEVERITY_ORDER
@@ -99,71 +98,69 @@ class BranchComparator:
         new_findings: FindingsList = comparison["new_findings"]
         reduced_findings: FindingsList = comparison["reduced_findings"]
 
-        increased_counts = {s: 0 for s in SEVERITY_ORDER}
+        lines = [
+            "## AquaSec Security Scan — Branch Comparison",
+            "",
+            f"**Branch to compare with master:** `{self.branch_name}`",
+        ]
+
+        if not new_findings and not reduced_findings:
+            lines.extend(["", "> No differences found between master and developer branch."])
+            lines.append("")
+            return "\n".join(lines)
+
+        # Severity breakdown table
+        new_counts = {s: 0 for s in SEVERITY_ORDER}
         reduced_counts = {s: 0 for s in SEVERITY_ORDER}
 
         for f in new_findings:
             sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "LOW")
-            increased_counts[sev] += 1
+            new_counts[sev] += 1
 
         for f in reduced_findings:
             sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "LOW")
             reduced_counts[sev] += 1
 
-        lines = [
-            "## AquaSec Security Scan — Branch Comparison",
-            "",
-            f"**Branch to compare with master:** `{self.branch_name}`",
+        lines.extend([
             "",
             "### Severity Breakdown",
             "",
             "| | CRITICAL | HIGH | MEDIUM | LOW |",
             "|---|---|---|---|---|",
-            f"| **Increase (+)** | {increased_counts['CRITICAL']} | {increased_counts['HIGH']} "
-            f"| {increased_counts['MEDIUM']} | {increased_counts['LOW']} |",
+            f"| **New (+)** | {new_counts['CRITICAL']} | {new_counts['HIGH']} "
+            f"| {new_counts['MEDIUM']} | {new_counts['LOW']} |",
             f"| **Reduced (-)** | {reduced_counts['CRITICAL']} | {reduced_counts['HIGH']} "
             f"| {reduced_counts['MEDIUM']} | {reduced_counts['LOW']} |",
-        ]
+        ])
 
         if new_findings:
-            link_to_security_tab = self._get_pr_security_link()
-            if link_to_security_tab:
-                lines.extend(
-                    ["", "### GitHub Security New Findings", "", f"[PR security tab link]({link_to_security_tab})"]
-                )
-            else:
-                lines.extend(["", "### GitHub Security New Findings"])
+            lines.extend(["", "### New Findings", ""])
+            lines.extend(self._format_findings_list(new_findings))
 
         if reduced_findings:
             lines.extend(["", "### Reduced Findings", ""])
-            for f in sorted(reduced_findings, key=lambda x: x.get("severity", 99)):
-                sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "N/A")
-                target_file = f.get("target_file", "")
-                start_line = f.get("target_start_line", "")
-                location = f"{target_file}:{start_line}" if target_file and start_line else target_file
-                lines.append(
-                    f"- **[{sev}]** {f.get('avd_id', 'N/A')} — {f.get('title', '')} (`{location}`)"
-                )
-
-        if not new_findings and not reduced_findings:
-            lines.extend(["", "> No differences found between master and developer branch."])
+            lines.extend(self._format_findings_list(reduced_findings))
 
         lines.append("")
         return "\n".join(lines)
 
     @staticmethod
-    def _get_pr_security_link() -> str:
-        """Build a dynamic link to the PR security tab using GitHub environment variables."""
-        server_url = os.getenv("GITHUB_SERVER_URL", "")
-        repository = os.getenv("GITHUB_REPOSITORY", "")
-        github_ref = os.getenv("GITHUB_REF", "")
+    def _format_findings_list(findings: FindingsList) -> list[str]:
+        """
+        Format a list of findings as Markdown bullet points sorted by severity.
 
-        if not all([server_url, repository, github_ref]):
-            return ""
-
-        parts = github_ref.split("/")
-        if len(parts) >= 3 and parts[1] == "pull":
-            pr_number = parts[2]
-            return f"{server_url}/{repository}/security/code-scanning?query=pr%3A{pr_number}"
-
-        return ""
+        Args:
+            findings: List of finding dictionaries.
+        Returns:
+            List of formatted findings as Markdown strings.
+        """
+        formatted_findings: list[str] = []
+        for f in sorted(findings, key=lambda x: x.get("severity", 99)):
+            sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "N/A")
+            target_file = f.get("target_file", "")
+            start_line = f.get("target_start_line", "")
+            location = f"{target_file}:{start_line}" if target_file and start_line else target_file
+            formatted_findings.append(
+                f"- **[{sev}]** {f.get('avd_id', 'N/A')} — {f.get('title', '')} (`{location}`)"
+            )
+        return formatted_findings

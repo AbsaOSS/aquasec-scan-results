@@ -18,8 +18,6 @@
 Tests for branch_comparator module.
 """
 
-import pytest
-
 from src.model.branch_comparator import BranchComparator
 
 
@@ -113,13 +111,18 @@ def test_build_markdown_summary_contains_header():
 
 def test_build_markdown_summary_shows_new_findings():
     comparison = {
-        "new_findings": [{"severity": 1, "avd_id": "AVD-001", "title": "Critical issue", "target_file": "app.py"}],
+        "new_findings": [
+            {"severity": 1, "avd_id": "AVD-001", "title": "Critical issue", "target_file": "app.py", "target_start_line": 10}
+        ],
         "reduced_findings": [],
     }
 
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 
-    assert "GitHub Security New Findings" in actual
+    assert "### New Findings" in actual
+    assert "**[CRITICAL]**" in actual
+    assert "AVD-001" in actual
+    assert "`app.py:10`" in actual
 
 
 def test_build_markdown_summary_shows_reduced_findings():
@@ -144,6 +147,8 @@ def test_build_markdown_summary_shows_no_diff_message():
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 
     assert "No differences found" in actual
+    assert "### Severity Breakdown" not in actual
+    assert "| **New (+)**" not in actual
 
 
 def test_build_markdown_summary_severity_counts():
@@ -159,38 +164,5 @@ def test_build_markdown_summary_severity_counts():
 
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 
-    assert "| **Increase (+)** | 1 | 0 | 1 | 0 |" in actual
+    assert "| **New (+)** | 1 | 0 | 1 | 0 |" in actual
     assert "| **Reduced (-)** | 0 | 1 | 0 | 0 |" in actual
-
-
-# _get_pr_security_link
-
-
-def test_get_pr_security_link_builds_dynamic_url(monkeypatch):
-    monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.com")
-    monkeypatch.setenv("GITHUB_REPOSITORY", "AbsaOSS/aquasec-scan-results")
-    monkeypatch.setenv("GITHUB_REF", "refs/pull/42/merge")
-
-    actual = BranchComparator._get_pr_security_link()
-
-    assert "https://github.com/AbsaOSS/aquasec-scan-results/security/code-scanning?query=pr%3A42" == actual
-
-
-def test_get_pr_security_link_returns_empty_when_not_pr(monkeypatch):
-    monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.com")
-    monkeypatch.setenv("GITHUB_REPOSITORY", "AbsaOSS/aquasec-scan-results")
-    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
-
-    actual = BranchComparator._get_pr_security_link()
-
-    assert "" == actual
-
-
-def test_get_pr_security_link_returns_empty_when_env_missing(monkeypatch):
-    monkeypatch.delenv("GITHUB_SERVER_URL", raising=False)
-    monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
-    monkeypatch.delenv("GITHUB_REF", raising=False)
-
-    actual = BranchComparator._get_pr_security_link()
-
-    assert "" == actual
