@@ -59,7 +59,7 @@ class BranchComparator:
         """
         try:
             return SEVERITY_MAP.get(int(raw_severity), default)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):  # fmt: skip
             return default
 
     @staticmethod
