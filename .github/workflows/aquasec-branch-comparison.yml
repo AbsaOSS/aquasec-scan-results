@@ -41,7 +41,7 @@ jobs:
 
       - name: Compare branches
         id: aquasec
-        uses: /.
+        uses: ./
         with:
           aqua-key: ${{ secrets.AQUA_KEY }}
           aqua-secret: ${{ secrets.AQUA_SECRET }}
@@ -64,3 +64,12 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body-path: ${{ steps.aquasec.outputs.comparison-summary-file }}
+
+      - name: Fail if new findings detected
+        run: |
+          if grep -q '### New Findings' "${{ steps.aquasec.outputs.comparison-summary-file }}"; then
+            echo "::error::New security findings detected in branch comparison. Please resolve them before merging."
+            exit 1
+          fi
+          echo "No new security findings detected."
+        shell: bash
