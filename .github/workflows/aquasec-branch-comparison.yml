@@ -39,9 +39,9 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Compare Branches
+      - name: Compare branches
         id: aquasec
-        uses: AbsaOSS/aquasec-scan-results@master
+        uses: AbsaOSS/aquasec-scan-results@feature/developer-branch-comparison
         with:
           aqua-key: ${{ secrets.AQUA_KEY }}
           aqua-secret: ${{ secrets.AQUA_SECRET }}
@@ -50,7 +50,7 @@ jobs:
           dev-branch-comparison: 'true'
 
       - name: Find existing PR comment
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -58,7 +58,7 @@ jobs:
           body-includes: '<!-- aquasec-branch-comparison -->'
 
       - name: Post or update PR comment
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}

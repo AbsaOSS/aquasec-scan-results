@@ -106,7 +106,7 @@ def test_build_markdown_summary_contains_header():
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 
     assert "## AquaSec Security Scan — Branch Comparison" in actual
-    assert "`feature/test`" in actual
+    assert "**feature/test**" in actual
 
 
 def test_build_markdown_summary_shows_new_findings():

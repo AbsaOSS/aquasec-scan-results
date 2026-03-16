@@ -122,17 +122,19 @@ class BranchComparator:
             sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "LOW")
             reduced_counts[sev] += 1
 
-        lines.extend([
-            "",
-            "### Severity Breakdown",
-            "",
-            "| | CRITICAL | HIGH | MEDIUM | LOW |",
-            "|---|---|---|---|---|",
-            f"| **New (+)** | {new_counts['CRITICAL']} | {new_counts['HIGH']} "
-            f"| {new_counts['MEDIUM']} | {new_counts['LOW']} |",
-            f"| **Reduced (-)** | {reduced_counts['CRITICAL']} | {reduced_counts['HIGH']} "
-            f"| {reduced_counts['MEDIUM']} | {reduced_counts['LOW']} |",
-        ])
+        lines.extend(
+            [
+                "",
+                "### Severity Breakdown",
+                "",
+                "| | CRITICAL | HIGH | MEDIUM | LOW |",
+                "|---|---|---|---|---|",
+                f"| **New (+)** | {new_counts['CRITICAL']} | {new_counts['HIGH']} "
+                f"| {new_counts['MEDIUM']} | {new_counts['LOW']} |",
+                f"| **Reduced (-)** | {reduced_counts['CRITICAL']} | {reduced_counts['HIGH']} "
+                f"| {reduced_counts['MEDIUM']} | {reduced_counts['LOW']} |",
+            ]
+        )
 
         if new_findings:
             lines.extend(["", "### New Findings", ""])
@@ -161,7 +163,5 @@ class BranchComparator:
             target_file = f.get("target_file", "")
             start_line = f.get("target_start_line", "")
             location = f"{target_file}:{start_line}" if target_file and start_line else target_file
-            formatted_findings.append(
-                f"- **[{sev}]** {f.get('avd_id', 'N/A')} — {f.get('title', '')} (`{location}`)"
-            )
+            formatted_findings.append(f"- **[{sev}]** {f.get('avd_id', 'N/A')} — {f.get('title', '')} (`{location}`)")
         return formatted_findings
