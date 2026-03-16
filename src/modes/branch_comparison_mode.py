@@ -68,7 +68,6 @@ class BranchComparisonMode:
         comparator = BranchComparator(branch_name, master_findings, dev_findings)
         findings_comparison = comparator.compare()
         summary = comparator.build_comparison_summary(findings_comparison)
-        print(summary)
 
         # Saving comparison Markdown summary
         self.summary_file = os.path.abspath("comparison_summary.md")

@@ -116,7 +116,10 @@ class ScanTrigger:
                 if branch_record.get("branch_name") == branch:
                     status = branch_record.get("status", "")
                     if status == "scan_completed" and branch_record.get("scan_details"):
-                        scan_id = branch_record["scan_details"]["scan_id"]
+                        scan_id = branch_record["scan_details"].get("scan_id", "")
+                        if not scan_id:
+                            logger.warning("AquaSec Scan Results - scan_details missing scan_id.")
+                            break
                         logger.info("AquaSec Scan Results - Scan completed, scan_id received.")
                         return scan_id
                     if status == "scan_failed":
@@ -128,7 +131,7 @@ class ScanTrigger:
             time.sleep(POLL_INTERVAL)
             elapsed += POLL_INTERVAL
             logger.info(
-                "AquaSec Scan Results - Pulling for scan completion next try... (%ds/%ds).", elapsed, POLL_TIMEOUT
+                "AquaSec Scan Results - Polling for scan completion next try... (%ds/%ds).", elapsed, POLL_TIMEOUT
             )
 
         raise ValueError(f"Scan did not complete within {POLL_TIMEOUT}s for branch '{branch}'.")

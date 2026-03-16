@@ -125,7 +125,9 @@ def test_build_markdown_summary_shows_new_findings():
 def test_build_markdown_summary_shows_reduced_findings():
     comparison = {
         "new_findings": [],
-        "reduced_findings": [{"severity": 2, "avd_id": "AVD-002", "title": "High issue", "target_file": "lib.py"}],
+        "reduced_findings": [
+            {"severity": 2, "avd_id": "AVD-002", "title": "High issue", "target_file": "lib.py", "target_start_line": 42}
+        ],
     }
 
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
@@ -133,6 +135,7 @@ def test_build_markdown_summary_shows_reduced_findings():
     assert "### Reduced Findings" in actual
     assert "**[HIGH]**" in actual
     assert "AVD-002" in actual
+    assert "`lib.py:42`" in actual
 
 
 def test_build_markdown_summary_shows_no_diff_message():
@@ -158,3 +161,36 @@ def test_build_markdown_summary_severity_counts():
 
     assert "| **Increase (+)** | 1 | 0 | 1 | 0 |" in actual
     assert "| **Reduced (-)** | 0 | 1 | 0 | 0 |" in actual
+
+
+# _get_pr_security_link
+
+
+def test_get_pr_security_link_builds_dynamic_url(monkeypatch):
+    monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.com")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "AbsaOSS/aquasec-scan-results")
+    monkeypatch.setenv("GITHUB_REF", "refs/pull/42/merge")
+
+    actual = BranchComparator._get_pr_security_link()
+
+    assert "https://github.com/AbsaOSS/aquasec-scan-results/security/code-scanning?query=pr%3A42" == actual
+
+
+def test_get_pr_security_link_returns_empty_when_not_pr(monkeypatch):
+    monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.com")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "AbsaOSS/aquasec-scan-results")
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+
+    actual = BranchComparator._get_pr_security_link()
+
+    assert "" == actual
+
+
+def test_get_pr_security_link_returns_empty_when_env_missing(monkeypatch):
+    monkeypatch.delenv("GITHUB_SERVER_URL", raising=False)
+    monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
+    monkeypatch.delenv("GITHUB_REF", raising=False)
+
+    actual = BranchComparator._get_pr_security_link()
+
+    assert "" == actual

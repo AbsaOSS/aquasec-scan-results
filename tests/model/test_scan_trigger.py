@@ -166,6 +166,43 @@ def test_poll_scan_completion_encodes_branch_in_url(mocker):
     assert "feature%2Fmy-branch" in call_url
 
 
+def test_poll_scan_completion_retries_when_scan_id_missing(mocker):
+    trigger = ScanTrigger("test_token")
+
+    mock_missing_id_response = mocker.Mock()
+    mock_missing_id_response.status_code = 200
+    mock_missing_id_response.json.return_value = {
+        "data": [
+            {
+                "branch_name": "feature/branch",
+                "status": "scan_completed",
+                "scan_details": {},
+            }
+        ]
+    }
+
+    mock_success_response = mocker.Mock()
+    mock_success_response.status_code = 200
+    mock_success_response.json.return_value = {
+        "data": [
+            {
+                "branch_name": "feature/branch",
+                "status": "scan_completed",
+                "scan_details": {"scan_id": "scan-abc-123"},
+            }
+        ]
+    }
+
+    mocker.patch(
+        "src.model.scan_trigger.requests.get", side_effect=[mock_missing_id_response, mock_success_response]
+    )
+    mocker.patch("src.model.scan_trigger.time.sleep")
+
+    actual = trigger._get_scan_id("repo-id-123", "feature/branch")
+
+    assert "scan-abc-123" == actual
+
+
 # trigger_and_wait
 
 

@@ -19,6 +19,7 @@ This module implements branch comparison logic for AquaSec scan findings.
 """
 
 import logging
+import os
 from typing import Any
 
 from src.utils.constants import SEVERITY_MAP, SEVERITY_ORDER
@@ -125,19 +126,23 @@ class BranchComparator:
         ]
 
         if new_findings:
-            link_to_security_tab: str = (
-                "https://github.com/AbsaOSS/aquasec-scan-results/security/code-scanning?query=pr%3A35"
-            )
-            lines.extend(
-                ["", "### GitHub Security New Findings", "", f"[PR security tab link]({link_to_security_tab})"]
-            )
+            link_to_security_tab = self._get_pr_security_link()
+            if link_to_security_tab:
+                lines.extend(
+                    ["", "### GitHub Security New Findings", "", f"[PR security tab link]({link_to_security_tab})"]
+                )
+            else:
+                lines.extend(["", "### GitHub Security New Findings"])
 
         if reduced_findings:
             lines.extend(["", "### Reduced Findings", ""])
             for f in sorted(reduced_findings, key=lambda x: x.get("severity", 99)):
-                sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "UNKNOWN")
+                sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "N/A")
+                target_file = f.get("target_file", "")
+                start_line = f.get("target_start_line", "")
+                location = f"{target_file}:{start_line}" if target_file and start_line else target_file
                 lines.append(
-                    f"- **[{sev}]** {f.get('avd_id', 'N/A')} — {f.get('title', '')} (`{f.get('target_file', '')}`)"
+                    f"- **[{sev}]** {f.get('avd_id', 'N/A')} — {f.get('title', '')} (`{location}`)"
                 )
 
         if not new_findings and not reduced_findings:
@@ -145,3 +150,20 @@ class BranchComparator:
 
         lines.append("")
         return "\n".join(lines)
+
+    @staticmethod
+    def _get_pr_security_link() -> str:
+        """Build a dynamic link to the PR security tab using GitHub environment variables."""
+        server_url = os.getenv("GITHUB_SERVER_URL", "")
+        repository = os.getenv("GITHUB_REPOSITORY", "")
+        github_ref = os.getenv("GITHUB_REF", "")
+
+        if not all([server_url, repository, github_ref]):
+            return ""
+
+        parts = github_ref.split("/")
+        if len(parts) >= 3 and parts[1] == "pull":
+            pr_number = parts[2]
+            return f"{server_url}/{repository}/security/code-scanning?query=pr%3A{pr_number}"
+
+        return ""
