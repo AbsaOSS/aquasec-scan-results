@@ -29,7 +29,7 @@ from src.modes.branch_comparison_mode import BranchComparisonMode
 from src.modes.night_scan_mode import NightScanMode
 from src.utils.constants import DEV_BRANCH_COMPARISON
 from src.utils.logging_config import setup_logging
-from src.utils.utils import get_action_input, set_action_output
+from src.utils.utils import get_action_input, set_action_failed, set_action_output
 
 
 def run() -> None:
@@ -58,8 +58,9 @@ def run() -> None:
 
     # AquaSec modes run
     try:
+        has_new_findings: bool | None = None
         if branch_comparison_mode == "true":
-            summary_file = BranchComparisonMode(bearer_token).run()
+            summary_file, has_new_findings = BranchComparisonMode(bearer_token).run()
             set_action_output("comparison-summary-file", summary_file)
         else:
             sarif_filepath = NightScanMode(bearer_token).run()
@@ -70,6 +71,9 @@ def run() -> None:
         sys.exit(1)
 
     logger.info("AquaSec Scan Results - Finished.")
+
+    if branch_comparison_mode == "true" and has_new_findings:
+        set_action_failed("New security findings detected in branch comparison. Please resolve them before merging.")
 
 
 if __name__ == "__main__":

@@ -77,15 +77,15 @@ def test_run_exits_when_night_scan_raises(mocker, mock_main_setup):
 # run (comparison mode)
 
 
-def test_run_comparison_mode_sets_summary_output(mocker, mock_main_setup):
+def test_run_comparison_mode_sets_outputs_no_new_findings(mocker, mock_main_setup):
     mocker.patch("main.get_action_input", return_value="true")
     mock_comparison = mocker.patch("main.BranchComparisonMode")
-    mock_comparison.return_value.run.return_value = "/abs/path/comparison.md"
+    mock_comparison.return_value.run.return_value = ("/abs/path/comparison.md", False)
     mock_set_output = mocker.patch("main.set_action_output")
 
     run()
 
-    mock_set_output.assert_called_once_with("comparison-summary-file", "/abs/path/comparison.md")
+    mock_set_output.assert_any_call("comparison-summary-file", "/abs/path/comparison.md")
 
 
 def test_run_comparison_mode_exits_when_comparison_raises(mocker, mock_main_setup):

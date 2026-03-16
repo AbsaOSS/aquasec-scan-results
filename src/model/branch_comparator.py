@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 Finding = dict[str, Any]
 FindingsList = list[Finding]
+ComparisonResult = dict[str, FindingsList]
 
 
 class BranchComparator:
@@ -34,10 +35,32 @@ class BranchComparator:
     Class to compare AquaSec scan findings between master and developer branches.
     """
 
-    def __init__(self, branch_name, master_findings, dev_findings) -> None:
+    def __init__(
+        self,
+        branch_name: str,
+        master_findings: dict[str, Any],
+        dev_findings: dict[str, Any],
+    ) -> None:
         self.branch_name: str = branch_name
         self.master_findings = master_findings
         self.dev_findings = dev_findings
+
+    @staticmethod
+    def _severity_label(raw_severity: Any, default: str = "LOW") -> str:
+        """
+        Safely convert a raw severity value to a human-readable label.
+
+        Args:
+            raw_severity: The severity value from the API (could be int, str, or None).
+            default: The fallback label when conversion fails.
+
+        Returns:
+            A severity label string such as "CRITICAL", "HIGH", etc.
+        """
+        try:
+            return SEVERITY_MAP.get(int(raw_severity), default)
+        except TypeError, ValueError:
+            return default
 
     @staticmethod
     def _getting_unique_key(finding: Finding) -> str:
@@ -52,9 +75,13 @@ class BranchComparator:
         result_hash = finding.get("result_hash", "")
         if result_hash:
             return result_hash
-        return finding.get("avd_id", "") + finding.get("target_file", "") + str(finding.get("target_start_line", ""))
 
-    def compare(self) -> dict:
+        avd_id = str(finding.get("avd_id", ""))
+        target_file = str(finding.get("target_file", ""))
+        target_start_line = str(finding.get("target_start_line", ""))
+        return f"{avd_id}|{target_file}|{target_start_line}"
+
+    def compare(self) -> ComparisonResult:
         """
         Compare master and developer branch findings.
 
@@ -86,7 +113,7 @@ class BranchComparator:
             "reduced_findings": reduced_findings,
         }
 
-    def build_comparison_summary(self, comparison: dict) -> str:
+    def build_comparison_summary(self, comparison: ComparisonResult) -> str:
         """
         Build a GitHub PR comment text of the branch comparison.
 
@@ -115,11 +142,11 @@ class BranchComparator:
         reduced_counts = {s: 0 for s in SEVERITY_ORDER}
 
         for f in new_findings:
-            sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "LOW")
+            sev = self._severity_label(f.get("severity", 0))
             new_counts[sev] += 1
 
         for f in reduced_findings:
-            sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "LOW")
+            sev = self._severity_label(f.get("severity", 0))
             reduced_counts[sev] += 1
 
         lines.extend(
@@ -159,7 +186,7 @@ class BranchComparator:
         """
         formatted_findings: list[str] = []
         for f in sorted(findings, key=lambda x: x.get("severity", 99)):
-            sev = SEVERITY_MAP.get(int(f.get("severity", 0)), "N/A")
+            sev = BranchComparator._severity_label(f.get("severity", 0), "N/A")
             target_file = f.get("target_file", "")
             start_line = f.get("target_start_line", "")
             location = f"{target_file}:{start_line}" if target_file and start_line else target_file

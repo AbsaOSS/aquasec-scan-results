@@ -26,7 +26,7 @@ from src.modes.branch_comparison_mode import BranchComparisonMode
 # run
 
 
-def test_run_returns_summary_filepath(mocker, monkeypatch):
+def test_run_returns_summary_filepath_and_no_new_findings(mocker, monkeypatch):
     monkeypatch.setenv("GITHUB_HEAD_REF", "feature/test")
     mocker.patch("src.modes.branch_comparison_mode.get_action_input", return_value="repo-123")
     mock_trigger = mocker.patch("src.modes.branch_comparison_mode.ScanTrigger")
@@ -39,9 +39,31 @@ def test_run_returns_summary_filepath(mocker, monkeypatch):
     mocker.patch("builtins.open", mocker.mock_open())
     mocker.patch("src.modes.branch_comparison_mode.os.path.abspath", return_value="/abs/path/comparison_summary.md")
 
-    actual = BranchComparisonMode("test_token").run()
+    summary_file, has_new_findings = BranchComparisonMode("test_token").run()
 
-    assert "/abs/path/comparison_summary.md" == actual
+    assert "/abs/path/comparison_summary.md" == summary_file
+    assert has_new_findings is False
+
+
+def test_run_returns_has_new_findings_true(mocker, monkeypatch):
+    monkeypatch.setenv("GITHUB_HEAD_REF", "feature/test")
+    mocker.patch("src.modes.branch_comparison_mode.get_action_input", return_value="repo-123")
+    mock_trigger = mocker.patch("src.modes.branch_comparison_mode.ScanTrigger")
+    mock_trigger.return_value.trigger_and_get_scan_id.return_value = "scan-id-123"
+    mock_fetcher = mocker.patch("src.modes.branch_comparison_mode.ScanFetcher")
+    mock_fetcher.return_value.fetch_findings.side_effect = [{"data": []}, {"data": []}]
+    mock_comparator = mocker.patch("src.modes.branch_comparison_mode.BranchComparator")
+    mock_comparator.return_value.compare.return_value = {
+        "new_findings": [{"result_hash": "h1", "severity": 1}],
+        "reduced_findings": [],
+    }
+    mock_comparator.return_value.build_comparison_summary.return_value = "## Summary"
+    mocker.patch("builtins.open", mocker.mock_open())
+    mocker.patch("src.modes.branch_comparison_mode.os.path.abspath", return_value="/abs/path/comparison_summary.md")
+
+    _, has_new_findings = BranchComparisonMode("test_token").run()
+
+    assert has_new_findings is True
 
 
 def test_run_raises_when_github_head_ref_not_set(monkeypatch):

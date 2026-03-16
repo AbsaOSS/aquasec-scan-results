@@ -38,12 +38,13 @@ class BranchComparisonMode:
     def __init__(self, bearer_token: str) -> None:
         self.bearer_token = bearer_token
 
-    def run(self) -> str:
+    def run(self) -> tuple[str, bool]:
         """
         Run the developer branch/master comparison flow.
 
         Returns:
-            Absolute path to the generated comparison summary Markdown file.
+            Tuple of (absolute path to comparison summary Markdown file,
+            whether new findings were detected).
         Raises:
             ValueError: If GITHUB_HEAD_REF is not set or API returns invalid response.
         """
@@ -63,6 +64,7 @@ class BranchComparisonMode:
         # Compare findings and generate comparison summary
         comparator = BranchComparator(branch_name, master_findings, dev_findings)
         findings_comparison = comparator.compare()
+        has_new_findings = bool(findings_comparison["new_findings"])
         summary = comparator.build_comparison_summary(findings_comparison)
 
         # Save comparison Markdown summary
@@ -71,4 +73,4 @@ class BranchComparisonMode:
             md_file.write(summary)
         logger.info("AquaSec Scan Results - Comparison summary saved in `%s`.", summary_file)
 
-        return summary_file
+        return summary_file, has_new_findings

@@ -31,6 +31,7 @@ permissions:
 jobs:
   branch-comparison:
     name: AquaSec Branch Comparison
+    if: ${{ !github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -50,6 +51,7 @@ jobs:
           dev-branch-comparison: 'true'
 
       - name: Find existing PR comment
+        if: always()
         uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad
         id: find-comment
         with:
@@ -58,18 +60,10 @@ jobs:
           body-includes: '<!-- aquasec-branch-comparison -->'
 
       - name: Post or update PR comment
+        if: always()
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body-path: ${{ steps.aquasec.outputs.comparison-summary-file }}
-
-      - name: Fail if new findings detected
-        run: |
-          if grep -q '### New Findings' "${{ steps.aquasec.outputs.comparison-summary-file }}"; then
-            echo "::error::New security findings detected in branch comparison. Please resolve them before merging."
-            exit 1
-          fi
-          echo "No new security findings detected."
-        shell: bash

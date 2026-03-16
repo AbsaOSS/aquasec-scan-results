@@ -18,10 +18,36 @@
 Tests for branch_comparator module.
 """
 
+import pytest
+
 from src.model.branch_comparator import BranchComparator
 
 
-# _finding_key
+# _severity_label
+
+
+def test_severity_label_returns_mapped_label_for_valid_int():
+    assert "CRITICAL" == BranchComparator._severity_label(1)
+
+
+def test_severity_label_returns_mapped_label_for_numeric_string():
+    assert "HIGH" == BranchComparator._severity_label("2")
+
+
+@pytest.mark.parametrize("raw_severity", [None, "high", "invalid", "", object()])
+def test_severity_label_returns_default_for_unconvertible_values(raw_severity):
+    assert "LOW" == BranchComparator._severity_label(raw_severity)
+
+
+def test_severity_label_returns_custom_default():
+    assert "N/A" == BranchComparator._severity_label(None, "N/A")
+
+
+def test_severity_label_returns_default_for_unmapped_int():
+    assert "LOW" == BranchComparator._severity_label(999)
+
+
+# _getting_unique_key
 
 
 def test_finding_key_uses_result_hash():
@@ -37,13 +63,13 @@ def test_finding_key_uses_fallback_when_no_result_hash():
 
     actual = BranchComparator._getting_unique_key(finding)
 
-    assert "AVD-001file.py10" == actual
+    assert "AVD-001|file.py|10" == actual
 
 
 def test_finding_key_handles_empty_finding():
     actual = BranchComparator._getting_unique_key({})
 
-    assert "" == actual
+    assert "||" == actual
 
 
 # compare
