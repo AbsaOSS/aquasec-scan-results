@@ -51,7 +51,7 @@ jobs:
           dev-branch-comparison: 'true'
 
       - name: Find existing PR comment
-        if: always()
+        if: always() && steps.aquasec.outputs.comparison-summary-file != ''
         uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad
         id: find-comment
         with:
@@ -60,7 +60,7 @@ jobs:
           body-includes: '<!-- aquasec-branch-comparison -->'
 
       - name: Post or update PR comment
-        if: always()
+        if: always() && steps.aquasec.outputs.comparison-summary-file != ''
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
         with:
           issue-number: ${{ github.event.pull_request.number }}

@@ -86,7 +86,7 @@ class BranchComparator:
         Compare master and developer branch findings.
 
         Returns:
-            Dictionary with new_findings, reduced_findings, master_total, and dev_total.
+            A dict with 'new_findings' and 'reduced_findings' lists.
         """
         logger.info("AquaSec Scan Results - Comparing master/dev branch findings.")
 
