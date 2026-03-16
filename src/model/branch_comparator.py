@@ -99,9 +99,10 @@ class BranchComparator:
         reduced_findings: FindingsList = comparison["reduced_findings"]
 
         lines = [
+            "<!-- aquasec-branch-comparison -->",
             "## AquaSec Security Scan — Branch Comparison",
             "",
-            f"**Branch to compare with master:** `{self.branch_name}`",
+            f"Git branch compared with master: **{self.branch_name}**",
         ]
 
         if not new_findings and not reduced_findings:
