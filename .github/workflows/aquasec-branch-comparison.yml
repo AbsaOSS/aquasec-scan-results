@@ -41,7 +41,7 @@ jobs:
 
       - name: Compare branches
         id: aquasec
-        uses: AbsaOSS/aquasec-scan-results@feature/developer-branch-comparison
+        uses: /.
         with:
           aqua-key: ${{ secrets.AQUA_KEY }}
           aqua-secret: ${{ secrets.AQUA_SECRET }}
