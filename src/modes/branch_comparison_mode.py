@@ -21,9 +21,9 @@ This module implements the developer branch comparison flow for AquaSec scan res
 import logging
 import os
 
-from src.model.branch_comparator import BranchComparator
-from src.model.scan_fetcher import ScanFetcher
-from src.model.scan_trigger import ScanTrigger
+from src.services.branch_comparator import BranchComparator
+from src.services.scan_fetcher import ScanFetcher
+from src.services.scan_trigger import ScanTrigger
 from src.utils.constants import REPOSITORY_ID
 from src.utils.utils import get_action_input
 
@@ -58,13 +58,13 @@ class BranchComparisonMode:
         # Fetch findings for comparison
         scan_fetcher = ScanFetcher(self.bearer_token)
         scan_id = ScanTrigger(self.bearer_token).trigger_and_get_scan_id(repository_id, branch_name)
-        dev_findings = scan_fetcher.fetch_findings(scan_id=scan_id)
-        master_findings = scan_fetcher.fetch_findings()
+        dev_scan_response = scan_fetcher.fetch_findings(scan_id=scan_id)
+        master_scan_response = scan_fetcher.fetch_findings()
 
         # Compare findings and generate comparison summary
-        comparator = BranchComparator(branch_name, master_findings, dev_findings)
-        findings_comparison = comparator.compare()
-        has_new_findings = bool(findings_comparison["new_findings"])
+        comparator = BranchComparator(branch_name, master_scan_response, dev_scan_response)
+        findings_comparison = comparator.compute_findings_delta()
+        has_new_findings = bool(findings_comparison.new_findings)
         summary = comparator.build_comparison_summary(findings_comparison)
 
         # Save comparison Markdown summary

@@ -53,13 +53,13 @@ def run() -> None:
         logger.exception("Authentication failed: %s", str(e))
         sys.exit(1)
 
-    # Determine if branch comparison modes is wanted
-    branch_comparison_mode: str = get_action_input(DEV_BRANCH_COMPARISON).lower()
+    # Determine if branch comparison mode is wanted
+    branch_comparison_mode: bool = get_action_input(DEV_BRANCH_COMPARISON).lower() == "true"
 
     # AquaSec modes run
     try:
         has_new_findings: bool | None = None
-        if branch_comparison_mode == "true":
+        if branch_comparison_mode:
             summary_file, has_new_findings = BranchComparisonMode(bearer_token).run()
             set_action_output("comparison-summary-file", summary_file)
         else:
@@ -72,7 +72,7 @@ def run() -> None:
 
     logger.info("AquaSec Scan Results - Finished.")
 
-    if branch_comparison_mode == "true" and has_new_findings:
+    if branch_comparison_mode and has_new_findings:
         set_action_failed("New security findings detected in branch comparison. Please resolve them before merging.")
 
 

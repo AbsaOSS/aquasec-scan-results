@@ -67,3 +67,11 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body-path: ${{ steps.aquasec.outputs.comparison-summary-file }}
+
+      - name: Upload comparison summary as artifact
+        if: always() && steps.aquasec.outputs.comparison-summary-file != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: aquasec-comparison-summary-pr-${{ github.event.pull_request.number }}
+          path: ${{ steps.aquasec.outputs.comparison-summary-file }}
+          retention-days: 7
