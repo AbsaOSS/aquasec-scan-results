@@ -20,6 +20,7 @@ Tests for BranchComparisonMode module.
 
 import pytest
 
+from src.types import ComparisonResult
 from src.modes.branch_comparison_mode import BranchComparisonMode
 
 
@@ -34,7 +35,7 @@ def test_run_returns_summary_filepath_and_no_new_findings(mocker, monkeypatch):
     mock_fetcher = mocker.patch("src.modes.branch_comparison_mode.ScanFetcher")
     mock_fetcher.return_value.fetch_findings.side_effect = [{"data": []}, {"data": []}]
     mock_comparator = mocker.patch("src.modes.branch_comparison_mode.BranchComparator")
-    mock_comparator.return_value.compare.return_value = {"new_findings": [], "reduced_findings": []}
+    mock_comparator.return_value.compute_findings_delta.return_value = ComparisonResult()
     mock_comparator.return_value.build_comparison_summary.return_value = "## Summary"
     mocker.patch("builtins.open", mocker.mock_open())
     mocker.patch("src.modes.branch_comparison_mode.os.path.abspath", return_value="/abs/path/comparison_summary.md")
@@ -53,10 +54,9 @@ def test_run_returns_has_new_findings_true(mocker, monkeypatch):
     mock_fetcher = mocker.patch("src.modes.branch_comparison_mode.ScanFetcher")
     mock_fetcher.return_value.fetch_findings.side_effect = [{"data": []}, {"data": []}]
     mock_comparator = mocker.patch("src.modes.branch_comparison_mode.BranchComparator")
-    mock_comparator.return_value.compare.return_value = {
-        "new_findings": [{"result_hash": "h1", "severity": 1}],
-        "reduced_findings": [],
-    }
+    mock_comparator.return_value.compute_findings_delta.return_value = ComparisonResult(
+        new_findings=[{"result_hash": "h1", "severity": 1}],
+    )
     mock_comparator.return_value.build_comparison_summary.return_value = "## Summary"
     mocker.patch("builtins.open", mocker.mock_open())
     mocker.patch("src.modes.branch_comparison_mode.os.path.abspath", return_value="/abs/path/comparison_summary.md")

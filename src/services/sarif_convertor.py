@@ -21,6 +21,7 @@ This module implements AquaSec findings to SARIF conversion logic.
 import logging
 from typing import Any
 
+from src.types import SarifFinding, SarifFindingsList, ScanResponse
 from src.utils.constants import (
     SARIF_SCHEMA_URL,
     SARIF_VERSION,
@@ -31,10 +32,6 @@ from src.utils.constants import (
 
 logger = logging.getLogger(__name__)
 
-# Type aliases
-Finding = dict[str, Any]
-FindingsList = list[Finding]
-
 
 class SarifConvertor:
     """
@@ -42,7 +39,7 @@ class SarifConvertor:
     """
 
     def __init__(self) -> None:
-        self.findings_json: FindingsList = []
+        self.findings_json: SarifFindingsList = []
 
     # Text utility
     @staticmethod
@@ -107,7 +104,7 @@ class SarifConvertor:
         severity_map = {4: "CRITICAL", 3: "HIGH", 2: "MEDIUM", 1: "LOW"}
         return severity_map.get(severity, "UNKNOWN")
 
-    def _build_rule(self, finding_json: Finding) -> dict:
+    def _build_rule(self, finding_json: SarifFinding) -> dict:
         """
         Build a SARIF rule object from an AquaSec finding.
 
@@ -153,7 +150,7 @@ class SarifConvertor:
 
         return rule
 
-    def _build_rule_message_text(self, finding_json: Finding) -> str:
+    def _build_rule_message_text(self, finding_json: SarifFinding) -> str:
         """
         Build Markdown message content for a SARIF rule.
 
@@ -197,7 +194,7 @@ class SarifConvertor:
 
         return "\n".join(message)
 
-    def _build_sarif_finding(self, finding_json: Finding, rule_index: int) -> dict:
+    def _build_sarif_finding(self, finding_json: SarifFinding, rule_index: int) -> dict:
         """
         Build a SARIF finding object from an AquaSec finding.
 
@@ -238,7 +235,7 @@ class SarifConvertor:
 
         return finding
 
-    def _build_finding_message(self, finding_json: Finding) -> str:
+    def _build_finding_message(self, finding_json: SarifFinding) -> str:
         """
         Build message text content for a SARIF finding.
 
@@ -278,7 +275,7 @@ class SarifConvertor:
         return "\n".join(message)
 
     @staticmethod
-    def _build_finding_location(finding_json: Finding) -> dict[str, Any] | None:
+    def _build_finding_location(finding_json: SarifFinding) -> dict[str, Any] | None:
         """
         Build SARIF location object from finding data.
 
@@ -354,7 +351,7 @@ class SarifConvertor:
         """
         return "\n".join(f"  - {item}" for item in items)
 
-    def convert_to_sarif(self, findings_json: dict) -> dict:
+    def convert_to_sarif(self, findings_json: ScanResponse) -> dict:
         """
         Convert AquaSec findings to SARIF 2.1.0 format.
 

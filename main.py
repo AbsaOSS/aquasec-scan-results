@@ -24,7 +24,7 @@ import sys
 from requests.exceptions import RequestException
 
 from src.action_inputs import ActionInputs
-from src.model.authenticator import AquaSecAuthenticator
+from src.services.authenticator import AquaSecAuthenticator
 from src.modes.branch_comparison_mode import BranchComparisonMode
 from src.modes.night_scan_mode import NightScanMode
 from src.utils.constants import DEV_BRANCH_COMPARISON

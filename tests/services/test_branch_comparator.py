@@ -18,130 +18,126 @@
 Tests for branch_comparator module.
 """
 
-import pytest
-
-from src.model.branch_comparator import BranchComparator
+from src.types import ComparisonResult
+from src.services.branch_comparator import BranchComparator
 
 
 # _severity_label
 
 
-def test_severity_label_returns_mapped_label_for_valid_int():
-    assert "CRITICAL" == BranchComparator._severity_label(1)
+def test_severity_label_returns_mapped_label():
+    comparator = BranchComparator("feature/test", {}, {})
 
-
-def test_severity_label_returns_mapped_label_for_numeric_string():
-    assert "HIGH" == BranchComparator._severity_label("2")
-
-
-@pytest.mark.parametrize("raw_severity", [None, "high", "invalid", "", object()])
-def test_severity_label_returns_default_for_unconvertible_values(raw_severity):
-    assert "LOW" == BranchComparator._severity_label(raw_severity)
-
-
-def test_severity_label_returns_custom_default():
-    assert "N/A" == BranchComparator._severity_label(None, "N/A")
+    assert "CRITICAL" == comparator._severity_label(1)
+    assert "HIGH" == comparator._severity_label(2)
+    assert "MEDIUM" == comparator._severity_label(3)
+    assert "LOW" == comparator._severity_label(4)
 
 
 def test_severity_label_returns_default_for_unmapped_int():
-    assert "LOW" == BranchComparator._severity_label(999)
+    comparator = BranchComparator("feature/test", {}, {})
+
+    assert "LOW" == comparator._severity_label(999)
 
 
 # _getting_unique_key
 
 
 def test_finding_key_uses_result_hash():
+    comparator = BranchComparator("feature/test", {}, {})
     finding = {"result_hash": "hash123", "avd_id": "AVD-001", "target_file": "file.py", "target_start_line": 10}
 
-    actual = BranchComparator._getting_unique_key(finding)
+    actual = comparator._getting_unique_key(finding)
 
     assert "hash123" == actual
 
 
 def test_finding_key_uses_fallback_when_no_result_hash():
+    comparator = BranchComparator("feature/test", {}, {})
     finding = {"avd_id": "AVD-001", "target_file": "file.py", "target_start_line": 10}
 
-    actual = BranchComparator._getting_unique_key(finding)
+    actual = comparator._getting_unique_key(finding)
 
     assert "AVD-001|file.py|10" == actual
 
 
 def test_finding_key_handles_empty_finding():
-    actual = BranchComparator._getting_unique_key({})
+    comparator = BranchComparator("feature/test", {}, {})
+
+    actual = comparator._getting_unique_key({})
 
     assert "||" == actual
 
 
-# compare
+# compute_findings_delta
 
 
-def test_compare_returns_no_diff_for_identical_findings():
+def test_compute_findings_delta_returns_no_diff_for_identical_findings():
     findings = {"data": [{"result_hash": "h1", "severity": 1}]}
 
-    actual = BranchComparator("feature/test", findings, findings).compare()
+    actual = BranchComparator("feature/test", findings, findings).compute_findings_delta()
 
-    assert [] == actual["new_findings"]
-    assert [] == actual["reduced_findings"]
+    assert [] == actual.new_findings
+    assert [] == actual.reduced_findings
 
 
-def test_compare_detects_new_findings():
+def test_compute_findings_delta_detects_new_findings():
     master = {"data": [{"result_hash": "h1", "severity": 1}]}
     dev = {"data": [{"result_hash": "h1", "severity": 1}, {"result_hash": "h2", "severity": 2}]}
 
-    actual = BranchComparator("feature/test", master, dev).compare()
+    actual = BranchComparator("feature/test", master, dev).compute_findings_delta()
 
-    assert 1 == len(actual["new_findings"])
-    assert "h2" == actual["new_findings"][0]["result_hash"]
-    assert [] == actual["reduced_findings"]
+    assert 1 == len(actual.new_findings)
+    assert "h2" == actual.new_findings[0]["result_hash"]
+    assert [] == actual.reduced_findings
 
 
-def test_compare_detects_reduced_findings():
+def test_compute_findings_delta_detects_reduced_findings():
     master = {"data": [{"result_hash": "h1", "severity": 1}, {"result_hash": "h2", "severity": 2}]}
     dev = {"data": [{"result_hash": "h1", "severity": 1}]}
 
-    actual = BranchComparator("feature/test", master, dev).compare()
+    actual = BranchComparator("feature/test", master, dev).compute_findings_delta()
 
-    assert [] == actual["new_findings"]
-    assert 1 == len(actual["reduced_findings"])
-    assert "h2" == actual["reduced_findings"][0]["result_hash"]
+    assert [] == actual.new_findings
+    assert 1 == len(actual.reduced_findings)
+    assert "h2" == actual.reduced_findings[0]["result_hash"]
 
 
-def test_compare_detects_both_new_and_reduced():
+def test_compute_findings_delta_detects_both_new_and_reduced():
     master = {"data": [{"result_hash": "h1", "severity": 1}]}
     dev = {"data": [{"result_hash": "h2", "severity": 3}]}
 
-    actual = BranchComparator("feature/test", master, dev).compare()
+    actual = BranchComparator("feature/test", master, dev).compute_findings_delta()
 
-    assert 1 == len(actual["new_findings"])
-    assert 1 == len(actual["reduced_findings"])
+    assert 1 == len(actual.new_findings)
+    assert 1 == len(actual.reduced_findings)
 
 
-def test_compare_handles_empty_findings():
-    actual = BranchComparator("feature/test", {"data": []}, {"data": []}).compare()
+def test_compute_findings_delta_handles_empty_findings():
+    actual = BranchComparator("feature/test", {"data": []}, {"data": []}).compute_findings_delta()
 
-    assert [] == actual["new_findings"]
-    assert [] == actual["reduced_findings"]
+    assert [] == actual.new_findings
+    assert [] == actual.reduced_findings
 
 
 # build_comparison_summary
 
 
 def test_build_markdown_summary_contains_header():
-    comparison = {"new_findings": [], "reduced_findings": []}
+    comparison = ComparisonResult()
 
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 
     assert "## AquaSec Security Scan — Branch Comparison" in actual
-    assert "**feature/test**" in actual
+    assert "Master compared with branch: **feature/test**" in actual
 
 
 def test_build_markdown_summary_shows_new_findings():
-    comparison = {
-        "new_findings": [
+    comparison = ComparisonResult(
+        new_findings=[
             {"severity": 1, "avd_id": "AVD-001", "title": "Critical issue", "target_file": "app.py", "target_start_line": 10}
         ],
-        "reduced_findings": [],
-    }
+    )
 
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 
@@ -152,12 +148,11 @@ def test_build_markdown_summary_shows_new_findings():
 
 
 def test_build_markdown_summary_shows_reduced_findings():
-    comparison = {
-        "new_findings": [],
-        "reduced_findings": [
+    comparison = ComparisonResult(
+        reduced_findings=[
             {"severity": 2, "avd_id": "AVD-002", "title": "High issue", "target_file": "lib.py", "target_start_line": 42}
         ],
-    }
+    )
 
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 
@@ -168,7 +163,7 @@ def test_build_markdown_summary_shows_reduced_findings():
 
 
 def test_build_markdown_summary_shows_no_diff_message():
-    comparison = {"new_findings": [], "reduced_findings": []}
+    comparison = ComparisonResult()
 
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 
@@ -178,15 +173,15 @@ def test_build_markdown_summary_shows_no_diff_message():
 
 
 def test_build_markdown_summary_severity_counts():
-    comparison = {
-        "new_findings": [
+    comparison = ComparisonResult(
+        new_findings=[
             {"severity": 1, "avd_id": "AVD-001", "title": "Crit", "target_file": "a.py"},
             {"severity": 3, "avd_id": "AVD-002", "title": "Med", "target_file": "b.py"},
         ],
-        "reduced_findings": [
+        reduced_findings=[
             {"severity": 2, "avd_id": "AVD-003", "title": "High", "target_file": "c.py"},
         ],
-    }
+    )
 
     actual = BranchComparator("feature/test", {}, {}).build_comparison_summary(comparison)
 

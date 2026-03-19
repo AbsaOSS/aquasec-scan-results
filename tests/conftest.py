@@ -49,4 +49,4 @@ def mock_valid_action_inputs(mocker):
 @pytest.fixture
 def mock_scan_fetcher_setup(mocker):
     """Common setup for ScanFetcher tests - mocks get_action_input for repository_id."""
-    mocker.patch("src.model.scan_fetcher.get_action_input", return_value="123e4567-e89b-12d3-a456-426614174000")
+    mocker.patch("src.services.scan_fetcher.get_action_input", return_value="123e4567-e89b-12d3-a456-426614174000")

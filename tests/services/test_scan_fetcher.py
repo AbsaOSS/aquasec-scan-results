@@ -22,7 +22,7 @@ import json
 
 import pytest
 
-from src.model.scan_fetcher import ScanFetcher
+from src.services.scan_fetcher import ScanFetcher
 
 
 # fetch_findings
@@ -33,7 +33,7 @@ def test_fetch_findings_returns_single_page_results(mocker, mock_scan_fetcher_se
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"total": 2, "data": [{"id": 1}, {"id": 2}]}
-    mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
+    mocker.patch("src.services.scan_fetcher.requests.get", return_value=mock_response)
 
     actual = fetcher.fetch_findings()
 
@@ -53,8 +53,8 @@ def test_fetch_findings_returns_multi_page_results(mocker, mock_scan_fetcher_set
     mock_response_page2.status_code = 200
     mock_response_page2.json.return_value = {"total": 3, "data": [{"id": 3}]}
 
-    mocker.patch("src.model.scan_fetcher.requests.get", side_effect=[mock_response_page1, mock_response_page2])
-    mocker.patch("src.model.scan_fetcher.time.sleep")
+    mocker.patch("src.services.scan_fetcher.requests.get", side_effect=[mock_response_page1, mock_response_page2])
+    mocker.patch("src.services.scan_fetcher.time.sleep")
 
     actual = fetcher.fetch_findings()
 
@@ -67,7 +67,7 @@ def test_fetch_findings_returns_empty_results(mocker, mock_scan_fetcher_setup): 
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"total": 0, "data": []}
-    mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
+    mocker.patch("src.services.scan_fetcher.requests.get", return_value=mock_response)
 
     actual = fetcher.fetch_findings()
 
@@ -80,7 +80,7 @@ def test_fetch_findings_raises_value_error_on_non_200_status(mocker, mock_scan_f
     mock_response = mocker.Mock()
     mock_response.status_code = 403
     mock_response.text = "Access denied"
-    mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
+    mocker.patch("src.services.scan_fetcher.requests.get", return_value=mock_response)
 
     with pytest.raises(ValueError) as exc_info:
         fetcher.fetch_findings()
@@ -93,7 +93,7 @@ def test_fetch_findings_raises_value_error_on_invalid_json(mocker, mock_scan_fet
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "doc", 0)
-    mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
+    mocker.patch("src.services.scan_fetcher.requests.get", return_value=mock_response)
 
     with pytest.raises(ValueError) as exc_info:
         fetcher.fetch_findings()
@@ -102,12 +102,12 @@ def test_fetch_findings_raises_value_error_on_invalid_json(mocker, mock_scan_fet
 
 
 def test_fetch_findings_uses_correct_request_structure(mocker):
-    mocker.patch("src.model.scan_fetcher.get_action_input", return_value="abc12345-e89b-12d3-a456-426614174000")
+    mocker.patch("src.services.scan_fetcher.get_action_input", return_value="abc12345-e89b-12d3-a456-426614174000")
     fetcher = ScanFetcher("test_token_123")
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"total": 0, "data": []}
-    mock_get = mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
+    mock_get = mocker.patch("src.services.scan_fetcher.requests.get", return_value=mock_response)
 
     fetcher.fetch_findings()
 
@@ -126,7 +126,7 @@ def test_fetch_findings_with_scan_id_uses_scan_ids_param(mocker):
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"total": 1, "data": [{"id": 1}]}
-    mock_get = mocker.patch("src.model.scan_fetcher.requests.get", return_value=mock_response)
+    mock_get = mocker.patch("src.services.scan_fetcher.requests.get", return_value=mock_response)
 
     actual = fetcher.fetch_findings(scan_id="scan-abc-123")
 
@@ -147,8 +147,8 @@ def test_fetch_findings_with_scan_id_paginates(mocker):
     mock_response_page2.status_code = 200
     mock_response_page2.json.return_value = {"total": 3, "data": [{"id": 3}]}
 
-    mocker.patch("src.model.scan_fetcher.requests.get", side_effect=[mock_response_page1, mock_response_page2])
-    mocker.patch("src.model.scan_fetcher.time.sleep")
+    mocker.patch("src.services.scan_fetcher.requests.get", side_effect=[mock_response_page1, mock_response_page2])
+    mocker.patch("src.services.scan_fetcher.time.sleep")
 
     actual = fetcher.fetch_findings(scan_id="scan-abc-123")
 

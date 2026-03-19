@@ -24,6 +24,7 @@ import time
 
 import requests
 
+from src.types import ScanResponse
 from src.utils.constants import SCAN_API_URL, PAGE_SIZE, FETCH_SLEEP_SECONDS, HTTP_TIMEOUT, REPOSITORY_ID
 from src.utils.utils import get_action_input
 
@@ -39,17 +40,14 @@ class ScanFetcher:
         self.bearer_token: str = bearer_token
         self.repository_id: str = ""
 
-    def fetch_findings(self, scan_id: str = "") -> dict:
+    def fetch_findings(self, scan_id: str = "") -> ScanResponse:
         """
         Fetch all security findings from AquaSec API with pagination.
 
         Args:
             scan_id: Optional scan ID to fetch findings for a specific scan.
-                     If empty, fetches by repository ID from action inputs.
-
         Returns:
             Dictionary containing total count and security findings.
-
         Raises:
             ValueError: If API returns invalid response or empty response.
             RequestException: If connection to API fails.
@@ -59,10 +57,6 @@ class ScanFetcher:
         findings = []
         page_num = 1
         total_expected = 0
-
-        if not scan_id:
-            self.repository_id = get_action_input(REPOSITORY_ID)
-
         headers = {"Authorization": f"Bearer {self.bearer_token}", "Accept": "application/json"}
 
         while True:
@@ -71,6 +65,7 @@ class ScanFetcher:
             if scan_id:
                 fetch_endpoint = f"{SCAN_API_URL}?scanIds={scan_id}&size={PAGE_SIZE}&page={page_num}"
             else:
+                self.repository_id = get_action_input(REPOSITORY_ID)
                 fetch_endpoint = f"{SCAN_API_URL}?repositoryIds={self.repository_id}&size={PAGE_SIZE}&page={page_num}"
 
             # Make scan fetching API request
@@ -110,4 +105,4 @@ class ScanFetcher:
         findings_total = len(findings)
         logger.info("AquaSec Scan Results - Scan findings fetch successful (%d total).", findings_total)
 
-        return {"total": findings_total, "data": findings}
+        return ScanResponse(total=findings_total, data=findings)

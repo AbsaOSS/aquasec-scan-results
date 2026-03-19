@@ -22,8 +22,8 @@ import json
 import logging
 import os
 
-from src.model.sarif_convertor import SarifConvertor
-from src.model.scan_fetcher import ScanFetcher
+from src.services.sarif_convertor import SarifConvertor
+from src.services.scan_fetcher import ScanFetcher
 from src.utils.utils import get_sarif_output_filename
 
 logger = logging.getLogger(__name__)
