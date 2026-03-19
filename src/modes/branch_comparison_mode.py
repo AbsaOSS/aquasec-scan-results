@@ -21,11 +21,10 @@ This module implements the developer branch comparison flow for AquaSec scan res
 import logging
 import os
 
+from src.action_inputs import ActionInputs
 from src.services.branch_comparator import BranchComparator
 from src.services.scan_fetcher import ScanFetcher
 from src.services.scan_trigger import ScanTrigger
-from src.utils.constants import REPOSITORY_ID
-from src.utils.utils import get_action_input
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class BranchComparisonMode:
         if not branch_name:
             raise ValueError("GITHUB_HEAD_REF not available. This action has to run in a PR.")
 
-        repository_id = get_action_input(REPOSITORY_ID)
+        repository_id = ActionInputs.get_repository_id()
         logger.info("AquaSec Scan Results - Starting branch comparison mode.")
 
         # Fetch findings for comparison

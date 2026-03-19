@@ -30,14 +30,14 @@ logger = logging.getLogger(__name__)
 
 class ActionInputs:
     """
-    A class representing all the action inputs. It is responsible for loading and managing
-    and validating the inputs required for running the GH Action.
+    Central access point for all action inputs.
+    Provides public static getters and input validation.
     """
 
     @staticmethod
-    def _get_aquasec_key() -> str:
+    def get_aquasec_key() -> str:
         """
-        Getter of the Aqua Security key.
+        Get the Aqua Security key.
 
         Returns:
             The Aqua Security key as a string.
@@ -45,9 +45,9 @@ class ActionInputs:
         return get_action_input(AQUA_KEY)
 
     @staticmethod
-    def _get_aquasec_secret() -> str:
+    def get_aquasec_secret() -> str:
         """
-        Getter of the Aqua Security secret.
+        Get the Aqua Security secret.
 
         Returns:
             The Aqua Security secret as a string.
@@ -55,9 +55,9 @@ class ActionInputs:
         return get_action_input(AQUA_SECRET)
 
     @staticmethod
-    def _get_group_id() -> str:
+    def get_group_id() -> str:
         """
-        Getter of the AquaSec Group ID for authentication.
+        Get the AquaSec Group ID for authentication.
 
         Returns:
             The Group ID as a string.
@@ -65,9 +65,9 @@ class ActionInputs:
         return get_action_input(GROUP_ID)
 
     @staticmethod
-    def _get_repository_id() -> str:
+    def get_repository_id() -> str:
         """
-        Getter of the repository ID.
+        Get the repository ID.
 
         Returns:
             The repository ID as a string.
@@ -75,12 +75,22 @@ class ActionInputs:
         return get_action_input(REPOSITORY_ID)
 
     @staticmethod
-    def _get_dev_branch_comparison() -> str:
+    def get_dev_branch_comparison() -> bool:
         """
-        Getter of the dev branch comparison flag.
+        Check if the dev branch comparison mode is enabled.
 
         Returns:
-            The dev branch comparison flag as a string.
+            True if dev branch comparison is enabled, False otherwise.
+        """
+        return get_action_input(DEV_BRANCH_COMPARISON).lower() == "true"
+
+    @staticmethod
+    def _get_raw_dev_branch_comparison() -> str:
+        """
+        Get the raw dev branch comparison flag for validation purposes.
+
+        Returns:
+            The raw dev branch comparison flag as a string.
         """
         return get_action_input(DEV_BRANCH_COMPARISON)
 
@@ -98,7 +108,7 @@ class ActionInputs:
         uuid_pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
         return bool(re.match(uuid_pattern, uuid_string))
 
-    def validate(self):
+    def validate(self) -> bool:
         """
         Validates the action inputs.
 
@@ -107,10 +117,10 @@ class ActionInputs:
         """
         logger.info("AquaSec Scan Results - Input validation starting.")
         error_count: int = 0
-        aquasec_key: str = self._get_aquasec_key()
-        aquasec_secret: str = self._get_aquasec_secret()
-        group_id: str = self._get_group_id()
-        repository_id: str = self._get_repository_id()
+        aquasec_key: str = self.get_aquasec_key()
+        aquasec_secret: str = self.get_aquasec_secret()
+        group_id: str = self.get_group_id()
+        repository_id: str = self.get_repository_id()
 
         ## AquaSec Key
         if not aquasec_key or not isinstance(aquasec_key, str):
@@ -136,7 +146,7 @@ class ActionInputs:
             error_count += 1
 
         ## Dev Branch Comparison
-        dev_branch_comparison: str = self._get_dev_branch_comparison()
+        dev_branch_comparison: str = self._get_raw_dev_branch_comparison()
         if dev_branch_comparison.lower() not in ("true", "false", ""):
             logger.error("DEV_BRANCH_COMPARISON: str - must be 'true' or 'false'.")
             error_count += 1

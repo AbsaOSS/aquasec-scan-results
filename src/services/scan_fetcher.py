@@ -24,9 +24,9 @@ import time
 
 import requests
 
+from src.action_inputs import ActionInputs
 from src.types import ScanResponse
-from src.utils.constants import SCAN_API_URL, PAGE_SIZE, FETCH_SLEEP_SECONDS, HTTP_TIMEOUT, REPOSITORY_ID
-from src.utils.utils import get_action_input
+from src.utils.constants import SCAN_API_URL, PAGE_SIZE, FETCH_SLEEP_SECONDS, HTTP_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class ScanFetcher:
             if scan_id:
                 fetch_endpoint = f"{SCAN_API_URL}?scanIds={scan_id}&size={PAGE_SIZE}&page={page_num}"
             else:
-                self.repository_id = get_action_input(REPOSITORY_ID)
+                self.repository_id = ActionInputs.get_repository_id()
                 fetch_endpoint = f"{SCAN_API_URL}?repositoryIds={self.repository_id}&size={PAGE_SIZE}&page={page_num}"
 
             # Make scan fetching API request

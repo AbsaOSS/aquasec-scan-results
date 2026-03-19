@@ -3,14 +3,17 @@ Copilot instructions for AquaSec Scan Results GitHub Action
 Purpose
 GitHub Action that fetches security scan results from AquaSec. Two operational modes:
 - **Night Scan** (default): converts findings to SARIF for GitHub Security tab integration.
-- **Branch Comparison** (`dev-branch-comparison: 'true'`): compares dev-branch findings against master, posts a Markdown summary to the PR, and fails the workflow when new findings are detected.
+- **Branch Comparison** (`dev-branch-comparison: 'true'`): triggers a dev-branch scan, compares findings against master, posts a Markdown summary to the PR, and fails the workflow when new findings are detected.
 
 Structure
 - Entry point: `main.py`
 - Action config: `action.yml`
+- Central input access and validation: `src/action_inputs.py`
+- Shared type aliases and dataclasses: `src/types.py`
 - Constants: `src/utils/constants.py`
+- Utilities: `src/utils/utils.py`, `src/utils/logging_config.py`
 - Mode orchestrators: `src/modes/night_scan_mode.py`, `src/modes/branch_comparison_mode.py`
-- Models: `src/model/` (authenticator, scan_fetcher, scan_trigger, sarif_convertor, branch_comparator)
+- Services: `src/services/` (authenticator, scan_fetcher, scan_trigger, sarif_convertor, branch_comparator)
 
 Inputs (via environment variables with INPUT_ prefix)
 - AQUA_KEY, AQUA_SECRET, GROUP_ID, REPOSITORY_ID (required)
@@ -20,6 +23,11 @@ Inputs (via environment variables with INPUT_ prefix)
 Outputs
 - `nightscan-sarif-file` — path to SARIF file (night scan mode)
 - `comparison-summary-file` — path to Markdown summary (branch comparison mode)
+
+Failure behaviour
+- `BranchComparisonMode.run()` returns `(summary_file, has_new_findings: bool)`
+- `main.py` calls `set_action_failed()` after saving outputs when `has_new_findings` is `True`
+- This ensures the PR comment is always posted before the workflow check turns red
 
 Python style
 - Python 3.14

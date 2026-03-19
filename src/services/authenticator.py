@@ -26,8 +26,8 @@ import time
 
 import requests
 
-from src.utils.constants import GROUP_ID, AUTH_API_URL, HTTP_TIMEOUT, AQUA_KEY, AQUA_SECRET
-from src.utils.utils import get_action_input
+from src.action_inputs import ActionInputs
+from src.utils.constants import AUTH_API_URL, HTTP_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +71,9 @@ class AquaSecAuthenticator:
         """
         logger.info("AquaSec Scan Results - API authentication starting.")
 
-        self.api_key = get_action_input(AQUA_KEY)
-        self.api_secret = get_action_input(AQUA_SECRET)
-        self.group_id = int(get_action_input(GROUP_ID))
+        self.api_key = ActionInputs.get_aquasec_key()
+        self.api_secret = ActionInputs.get_aquasec_secret()
+        self.group_id = int(ActionInputs.get_group_id())
         timestamp: int = int(time.time())
         method: str = "POST"
         auth_endpoint: str = AUTH_API_URL + "/v2/tokens"

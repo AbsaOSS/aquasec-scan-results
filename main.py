@@ -27,9 +27,8 @@ from src.action_inputs import ActionInputs
 from src.services.authenticator import AquaSecAuthenticator
 from src.modes.branch_comparison_mode import BranchComparisonMode
 from src.modes.night_scan_mode import NightScanMode
-from src.utils.constants import DEV_BRANCH_COMPARISON
 from src.utils.logging_config import setup_logging
-from src.utils.utils import get_action_input, set_action_failed, set_action_output
+from src.utils.utils import set_action_failed, set_action_output
 
 
 def run() -> None:
@@ -54,7 +53,7 @@ def run() -> None:
         sys.exit(1)
 
     # Determine if branch comparison mode is wanted
-    branch_comparison_mode: bool = get_action_input(DEV_BRANCH_COMPARISON).lower() == "true"
+    branch_comparison_mode: bool = ActionInputs.get_dev_branch_comparison()
 
     # AquaSec modes run
     try:

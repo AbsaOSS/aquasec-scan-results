@@ -20,6 +20,7 @@ Tests for BranchComparisonMode module.
 
 import pytest
 
+from src.action_inputs import ActionInputs
 from src.types import ComparisonResult
 from src.modes.branch_comparison_mode import BranchComparisonMode
 
@@ -29,7 +30,7 @@ from src.modes.branch_comparison_mode import BranchComparisonMode
 
 def test_run_returns_summary_filepath_and_no_new_findings(mocker, monkeypatch):
     monkeypatch.setenv("GITHUB_HEAD_REF", "feature/test")
-    mocker.patch("src.modes.branch_comparison_mode.get_action_input", return_value="repo-123")
+    mocker.patch.object(ActionInputs, "get_repository_id", return_value="repo-123")
     mock_trigger = mocker.patch("src.modes.branch_comparison_mode.ScanTrigger")
     mock_trigger.return_value.trigger_and_get_scan_id.return_value = "scan-id-123"
     mock_fetcher = mocker.patch("src.modes.branch_comparison_mode.ScanFetcher")
@@ -48,7 +49,7 @@ def test_run_returns_summary_filepath_and_no_new_findings(mocker, monkeypatch):
 
 def test_run_returns_has_new_findings_true(mocker, monkeypatch):
     monkeypatch.setenv("GITHUB_HEAD_REF", "feature/test")
-    mocker.patch("src.modes.branch_comparison_mode.get_action_input", return_value="repo-123")
+    mocker.patch.object(ActionInputs, "get_repository_id", return_value="repo-123")
     mock_trigger = mocker.patch("src.modes.branch_comparison_mode.ScanTrigger")
     mock_trigger.return_value.trigger_and_get_scan_id.return_value = "scan-id-123"
     mock_fetcher = mocker.patch("src.modes.branch_comparison_mode.ScanFetcher")
@@ -75,7 +76,7 @@ def test_run_raises_when_github_head_ref_not_set(monkeypatch):
 
 def test_run_raises_when_scan_trigger_fails(mocker, monkeypatch):
     monkeypatch.setenv("GITHUB_HEAD_REF", "feature/test")
-    mocker.patch("src.modes.branch_comparison_mode.get_action_input", return_value="repo-123")
+    mocker.patch.object(ActionInputs, "get_repository_id", return_value="repo-123")
     mock_trigger = mocker.patch("src.modes.branch_comparison_mode.ScanTrigger")
     mock_trigger.return_value.trigger_and_get_scan_id.side_effect = ValueError("Trigger failed")
 

@@ -33,20 +33,20 @@ def mock_main_setup(mocker):
     mocker.patch("main.ActionInputs.validate", return_value=True)
     mocker.patch("main.AquaSecAuthenticator.authenticate", return_value="test_token")
     mocker.patch("main.set_action_output")
-    mocker.patch("main.get_action_input", return_value="")
+    mocker.patch.object(ActionInputs, "get_dev_branch_comparison", return_value=False)
 
 
 @pytest.fixture
 def mock_valid_action_inputs(mocker):
     """Common setup for ActionInputs validation tests with valid inputs."""
-    mocker.patch.object(ActionInputs, "_get_aquasec_key", return_value="valid_key")
-    mocker.patch.object(ActionInputs, "_get_aquasec_secret", return_value="valid_secret")
-    mocker.patch.object(ActionInputs, "_get_group_id", return_value="1234")
-    mocker.patch.object(ActionInputs, "_get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
-    mocker.patch.object(ActionInputs, "_get_dev_branch_comparison", return_value="false")
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="valid_key")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="valid_secret")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
+    mocker.patch.object(ActionInputs, "get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
+    mocker.patch.object(ActionInputs, "_get_raw_dev_branch_comparison", return_value="false")
 
 
 @pytest.fixture
 def mock_scan_fetcher_setup(mocker):
-    """Common setup for ScanFetcher tests - mocks get_action_input for repository_id."""
-    mocker.patch("src.services.scan_fetcher.get_action_input", return_value="123e4567-e89b-12d3-a456-426614174000")
+    """Common setup for ScanFetcher tests - mocks ActionInputs.get_repository_id."""
+    mocker.patch.object(ActionInputs, "get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")

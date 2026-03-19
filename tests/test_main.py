@@ -22,6 +22,7 @@ import pytest
 from requests.exceptions import RequestException
 
 from main import run
+from src.action_inputs import ActionInputs
 
 
 # run
@@ -78,7 +79,7 @@ def test_run_exits_when_night_scan_raises(mocker, mock_main_setup):
 
 
 def test_run_comparison_mode_sets_summary_output(mocker, mock_main_setup):
-    mocker.patch("main.get_action_input", return_value="true")
+    mocker.patch.object(ActionInputs, "get_dev_branch_comparison", return_value=True)
     mock_comparison = mocker.patch("main.BranchComparisonMode")
     mock_comparison.return_value.run.return_value = ("/abs/path/comparison.md", False)
     mock_set_output = mocker.patch("main.set_action_output")
@@ -89,7 +90,7 @@ def test_run_comparison_mode_sets_summary_output(mocker, mock_main_setup):
 
 
 def test_run_comparison_mode_fails_when_new_findings(mocker, mock_main_setup):
-    mocker.patch("main.get_action_input", return_value="true")
+    mocker.patch.object(ActionInputs, "get_dev_branch_comparison", return_value=True)
     mock_comparison = mocker.patch("main.BranchComparisonMode")
     mock_comparison.return_value.run.return_value = ("/abs/path/comparison.md", True)
 
@@ -100,7 +101,7 @@ def test_run_comparison_mode_fails_when_new_findings(mocker, mock_main_setup):
 
 
 def test_run_comparison_mode_exits_when_comparison_raises(mocker, mock_main_setup):
-    mocker.patch("main.get_action_input", return_value="true")
+    mocker.patch.object(ActionInputs, "get_dev_branch_comparison", return_value=True)
     mock_comparison = mocker.patch("main.BranchComparisonMode")
     mock_comparison.return_value.run.side_effect = ValueError("Trigger failed")
 

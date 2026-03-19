@@ -22,6 +22,7 @@ import json
 
 import pytest
 
+from src.action_inputs import ActionInputs
 from src.services.scan_fetcher import ScanFetcher
 
 
@@ -102,7 +103,7 @@ def test_fetch_findings_raises_value_error_on_invalid_json(mocker, mock_scan_fet
 
 
 def test_fetch_findings_uses_correct_request_structure(mocker):
-    mocker.patch("src.services.scan_fetcher.get_action_input", return_value="abc12345-e89b-12d3-a456-426614174000")
+    mocker.patch.object(ActionInputs, "get_repository_id", return_value="abc12345-e89b-12d3-a456-426614174000")
     fetcher = ScanFetcher("test_token_123")
     mock_response = mocker.Mock()
     mock_response.status_code = 200
