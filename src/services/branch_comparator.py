@@ -19,15 +19,11 @@ This module implements branch comparison logic for AquaSec scan findings.
 """
 
 import logging
-from typing import Any
 
+from src.types import ComparisonFinding, ComparisonFindingsList, ComparisonResult, ScanResponse
 from src.utils.constants import SEVERITY_MAP, SEVERITY_ORDER
 
 logger = logging.getLogger(__name__)
-
-Finding = dict[str, Any]
-FindingsList = list[Finding]
-ComparisonResult = dict[str, FindingsList]
 
 
 class BranchComparator:
@@ -38,32 +34,28 @@ class BranchComparator:
     def __init__(
         self,
         branch_name: str,
-        master_findings: dict[str, Any],
-        dev_findings: dict[str, Any],
+        master_scan_response: ScanResponse,
+        dev_scan_response: ScanResponse,
     ) -> None:
         self.branch_name: str = branch_name
-        self.master_findings = master_findings
-        self.dev_findings = dev_findings
+        self.master_scan_response = master_scan_response
+        self.dev_scan_response = dev_scan_response
 
     @staticmethod
-    def _severity_label(raw_severity: Any, default: str = "LOW") -> str:
+    def _severity_label(raw_severity: int, default_output: str = "LOW") -> str:
         """
-        Safely convert a raw severity value to a human-readable label.
+        Convert a severity integer to a human-readable label.
 
         Args:
-            raw_severity: The severity value from the API (could be int, str, or None).
-            default: The fallback label when conversion fails.
-
+            raw_severity: The severity integer from the API.
+            default_output: The fallback label when the value is not in the severity map.
         Returns:
             A severity label string such as "CRITICAL", "HIGH", etc.
         """
-        try:
-            return SEVERITY_MAP.get(int(raw_severity), default)
-        except (TypeError, ValueError):  # fmt: skip
-            return default
+        return SEVERITY_MAP.get(raw_severity, default_output)
 
     @staticmethod
-    def _getting_unique_key(finding: Finding) -> str:
+    def _getting_unique_key(finding: ComparisonFinding) -> str:
         """
         Generate a unique key for a finding for deduplication.
 
@@ -81,20 +73,38 @@ class BranchComparator:
         target_start_line = str(finding.get("target_start_line", ""))
         return f"{avd_id}|{target_file}|{target_start_line}"
 
-    def compare(self) -> ComparisonResult:
+    def _format_findings_list(self, findings: ComparisonFindingsList) -> list[str]:
         """
-        Compare master and developer branch findings.
+        Format a list of findings as Markdown bullet points.
+
+        Args:
+            findings: List of finding dictionaries.
+        Returns:
+            List of formatted findings as Markdown strings.
+        """
+        formatted_findings: list[str] = []
+        for f in findings:
+            sev = self._severity_label(f.get("severity", 0))
+            target_file = f.get("target_file", "")
+            start_line = f.get("target_start_line", 0)
+            location = f"{target_file}:{start_line}" if target_file and start_line else target_file
+            formatted_findings.append(f"- **[{sev}]** {f.get('avd_id', 'N/A')} — {f.get('title', '')} (`{location}`)")
+        return formatted_findings
+
+    def compute_findings_delta(self) -> ComparisonResult:
+        """
+        Compute the delta between master and developer branch findings.
 
         Returns:
-            A dict with 'new_findings' and 'reduced_findings' lists.
+            A ComparisonResult with new and reduced findings.
         """
         logger.info("AquaSec Scan Results - Comparing master/dev branch findings.")
 
-        master_data: FindingsList = self.master_findings.get("data", [])
-        dev_data: FindingsList = self.dev_findings.get("data", [])
+        master_findings: ComparisonFindingsList = self.master_scan_response.get("data", [])
+        dev_findings: ComparisonFindingsList = self.dev_scan_response.get("data", [])
 
-        master_findings_keyed = {self._getting_unique_key(f): f for f in master_data}
-        dev_findings_keyed = {self._getting_unique_key(f): f for f in dev_data}
+        master_findings_keyed = {self._getting_unique_key(f): f for f in master_findings}
+        dev_findings_keyed = {self._getting_unique_key(f): f for f in dev_findings}
 
         new_keys = set(dev_findings_keyed.keys()) - set(master_findings_keyed.keys())
         reduced_keys = set(master_findings_keyed.keys()) - set(dev_findings_keyed.keys())
@@ -108,28 +118,28 @@ class BranchComparator:
             len(reduced_findings),
         )
 
-        return {
-            "new_findings": new_findings,
-            "reduced_findings": reduced_findings,
-        }
+        return ComparisonResult(
+            new_findings=new_findings,
+            reduced_findings=reduced_findings,
+        )
 
     def build_comparison_summary(self, comparison: ComparisonResult) -> str:
         """
         Build a GitHub PR comment text of the branch comparison.
 
         Args:
-            comparison: Comparison dict output returned by compare().
+            comparison: ComparisonResult returned by compute_findings_delta().
         Returns:
             A markdown-formatted string.
         """
-        new_findings: FindingsList = comparison["new_findings"]
-        reduced_findings: FindingsList = comparison["reduced_findings"]
+        new_findings: ComparisonFindingsList = comparison.new_findings
+        reduced_findings: ComparisonFindingsList = comparison.reduced_findings
 
         lines = [
             "<!-- aquasec-branch-comparison -->",
             "## AquaSec Security Scan — Branch Comparison",
             "",
-            f"Git branch compared with master: **{self.branch_name}**",
+            f"Master compared with branch: **{self.branch_name}**",
         ]
 
         if not new_findings and not reduced_findings:
@@ -142,12 +152,10 @@ class BranchComparator:
         reduced_counts = {s: 0 for s in SEVERITY_ORDER}
 
         for f in new_findings:
-            sev = self._severity_label(f.get("severity", 0))
-            new_counts[sev] += 1
+            new_counts[self._severity_label(f.get("severity", 0))] += 1
 
         for f in reduced_findings:
-            sev = self._severity_label(f.get("severity", 0))
-            reduced_counts[sev] += 1
+            reduced_counts[self._severity_label(f.get("severity", 0))] += 1
 
         lines.extend(
             [
@@ -173,22 +181,3 @@ class BranchComparator:
 
         lines.append("")
         return "\n".join(lines)
-
-    @staticmethod
-    def _format_findings_list(findings: FindingsList) -> list[str]:
-        """
-        Format a list of findings as Markdown bullet points sorted by severity.
-
-        Args:
-            findings: List of finding dictionaries.
-        Returns:
-            List of formatted findings as Markdown strings.
-        """
-        formatted_findings: list[str] = []
-        for f in sorted(findings, key=lambda x: x.get("severity", 99)):
-            sev = BranchComparator._severity_label(f.get("severity", 0), "N/A")
-            target_file = f.get("target_file", "")
-            start_line = f.get("target_start_line", "")
-            location = f"{target_file}:{start_line}" if target_file and start_line else target_file
-            formatted_findings.append(f"- **[{sev}]** {f.get('avd_id', 'N/A')} — {f.get('title', '')} (`{location}`)")
-        return formatted_findings
