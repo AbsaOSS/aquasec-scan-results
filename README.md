@@ -4,6 +4,8 @@
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
 - [Adding the Action to Your Workflow](#adding-the-action-to-your-workflow)
+  - [Night Scan Mode](#night-scan-mode)
+  - [Branch Comparison Mode](#branch-comparison-mode)
 - [Action Configuration](#action-configuration)
 - [Action Outputs](#action-outputs)
 - [Developer & Contribution Guide](#developer--contribution-guide)
@@ -13,10 +15,16 @@
 
 
 ## Overview
-This GitHub Action automates the integration of AquaSec security scan results into your repository's Security tab. 
-It retrieves scan findings via the AquaSec API, converts them to SARIF format, and makes them available for upload 
-to GitHub's Code Scanning feature. This provides developers with immediate visibility into security vulnerabilities 
-within their familiar GitHub workflow, eliminating the need to log in into AquaSec platform.
+This GitHub Action automates the integration of AquaSec security scan results into your GitHub workflow.
+It supports two operational modes:
+
+- **Night Scan** (default) — retrieves scan findings via the AquaSec API, converts them to SARIF format,
+  and makes them available for upload to GitHub's Code Scanning feature (Security tab).
+- **Branch Comparison** — triggers a scan on the developer branch, compares findings against master,
+  posts a severity breakdown as a PR comment, and **fails the workflow when new findings are detected**.
+
+This provides developers with immediate visibility into security vulnerabilities within their familiar
+GitHub workflow, eliminating the need to log in to the AquaSec platform.
 
 ---
 ## Prerequisites
@@ -29,6 +37,8 @@ To run this action successfully, make sure your environment meets the following 
 
 ---
 ## Adding the Action to Your Workflow
+
+### Night Scan Mode
 
 Create a workflow file (e.g., `.github/workflows/aquasec-night-scan.yml`) to run daily:
 
@@ -53,19 +63,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@v6
         with:
           python-version: '3.14'
 
       - name: Fetch AquaSec Scan Results
         id: aquasec
-        uses: AbsaOSS/aquasec-scan-results@v0.1.0
+        uses: AbsaOSS/aquasec-scan-results@v0.2.0
         with:
           aqua-key: ${{ secrets.AQUA_KEY }}
           aqua-secret: ${{ secrets.AQUA_SECRET }}
@@ -74,11 +84,75 @@ jobs:
           verbose-logging: 'false'
 
       - name: Upload Scan Results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4e94bd11f71e507f7f87df81788dff88d1dacbfb
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: ${{ steps.aquasec.outputs.aquasec-sarif-file }}
+          sarif_file: ${{ steps.aquasec.outputs.nightscan-sarif-file }}
           category: aquasec
 ```
+
+### Branch Comparison Mode
+
+Create a workflow file (e.g., `.github/workflows/aquasec-branch-comparison.yml`) to run on pull requests:
+
+```yaml
+name: AquaSec Branch Comparison
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+concurrency:
+  group: aquasec-branch-comparison-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  branch-comparison:
+    name: AquaSec Branch Comparison
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Compare branches
+        id: aquasec
+        uses: AbsaOSS/aquasec-scan-results@v0.2.0
+        with:
+          aqua-key: ${{ secrets.AQUA_KEY }}
+          aqua-secret: ${{ secrets.AQUA_SECRET }}
+          group-id: ${{ secrets.AQUA_GROUP_ID }}
+          repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
+          dev-branch-comparison: 'true'
+
+      - name: Find existing PR comment
+        if: always() && steps.aquasec.outputs.comparison-summary-file != ''
+        uses: peter-evans/find-comment@v4
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- aquasec-branch-comparison -->'
+
+      - name: Post or update PR comment
+        if: always() && steps.aquasec.outputs.comparison-summary-file != ''
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body-path: ${{ steps.aquasec.outputs.comparison-summary-file }}
+```
+
+> **Note:** The `Compare branches` step **fails the workflow** when new security findings are
+> detected in the developer branch. The PR comment steps use `if: always()` so the summary is
+> always posted, even when the comparison step fails.
 
 ### Credentials Configuration
 
@@ -97,13 +171,14 @@ jobs:
 
 The action requires the following inputs:
 
-| Name              | Description                         | Required | Default |
-|-------------------|-------------------------------------|----------|---------|
-| `aqua-key`        | AquaSec API Key credential          | Yes      | -       |
-| `aqua-secret`     | AquaSec API Secret credential       | Yes      | -       |
-| `group-id`        | AquaSec Group ID for authentication | Yes      | -       |
-| `repository-id`   | AquaSec Repository ID (UUID format) | Yes      | -       |
-| `verbose-logging` | Enable detailed logging             | No       | false   |
+| Name                     | Description                           | Required | Default |
+|--------------------------|---------------------------------------|----------|---------|
+| `aqua-key`               | AquaSec API Key credential            | Yes      | -       |
+| `aqua-secret`            | AquaSec API Secret credential         | Yes      | -       |
+| `group-id`               | AquaSec Group ID for authentication   | Yes      | -       |
+| `repository-id`          | AquaSec Repository ID (UUID format)   | Yes      | -       |
+| `verbose-logging`        | Enable detailed logging               | No       | false   |
+| `dev-branch-comparison`  | Enable developer branch comparison    | No       | false   |
 
 ### How to Obtain AquaSec Group ID
 
@@ -135,26 +210,53 @@ The action requires the following inputs:
 ---
 ## Action Outputs
 
-The action provides the following output for use in subsequent workflow steps:
+The action provides the following outputs depending on the mode:
 
-| Output Name          | Description                                                | Example Value                                                |
-|----------------------|------------------------------------------------------------|--------------------------------------------------------------|
-| `aquasec-sarif-file` | Full unique path to the generated SARIF file with findings | `/home/runner/work/repo/aquasec_scan_2026-02-05_09-38.sarif` |
+| Output Name                | Mode              | Description                                      | Example Value                                                |
+|----------------------------|-------------------|--------------------------------------------------|--------------------------------------------------------------|
+| `nightscan-sarif-file`     | Night Scan        | Full path to the generated SARIF file             | `/home/runner/work/repo/aquasec_scan_2026-03-06_09-38.sarif` |
+| `comparison-summary-file`  | Branch Comparison | Full path to the Markdown comparison summary file | `/home/runner/work/repo/comparison_summary.md`               |
 
-**Usage Example:**
+> **Branch Comparison behavior:** When the comparison detects new findings in the developer branch,
+> the action **fails with exit code 1** and emits a `::error::` annotation. The summary file is
+> written _before_ the failure, so subsequent steps guarded with `if: always()` can still post it.
+
+**Night Scan — usage example:**
 ```yaml
 - name: Fetch AquaSec Scan Results
   id: aquasec
-  uses: AbsaOSS/aquasec-scan-results@v0.1.0
+  uses: AbsaOSS/aquasec-scan-results@v0.2.0
   with:
     aqua-key: ${{ secrets.AQUA_KEY }}
     aqua-secret: ${{ secrets.AQUA_SECRET }}
     group-id: ${{ secrets.AQUA_GROUP_ID }}
     repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
 
-- name: Use SARIF output
-  run: |
-    echo "SARIF file generated: ${{ steps.aquasec.outputs.aquasec-sarif-file }}"
+- name: Upload SARIF to GitHub Security
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: ${{ steps.aquasec.outputs.nightscan-sarif-file }}
+    category: aquasec
+```
+
+**Branch Comparison — usage example:**
+```yaml
+- name: Compare branches
+  id: aquasec
+  uses: AbsaOSS/aquasec-scan-results@v0.2.0
+  with:
+    aqua-key: ${{ secrets.AQUA_KEY }}
+    aqua-secret: ${{ secrets.AQUA_SECRET }}
+    group-id: ${{ secrets.AQUA_GROUP_ID }}
+    repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
+    dev-branch-comparison: 'true'
+
+- name: Post or update PR comment
+  if: always() && steps.aquasec.outputs.comparison-summary-file != ''
+  uses: peter-evans/create-or-update-comment@v5
+  with:
+    issue-number: ${{ github.event.pull_request.number }}
+    body-path: ${{ steps.aquasec.outputs.comparison-summary-file }}
 ```
 
 ---

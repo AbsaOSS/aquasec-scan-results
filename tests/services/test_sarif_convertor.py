@@ -18,7 +18,7 @@
 Tests for SarifConvertor module.
 """
 
-from src.model.sarif_convertor import SarifConvertor
+from src.services.sarif_convertor import SarifConvertor
 from src.utils.constants import (
     SARIF_SCHEMA_URL,
     SARIF_VERSION,

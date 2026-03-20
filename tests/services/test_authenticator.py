@@ -20,7 +20,8 @@ Tests for authenticator module.
 
 import pytest
 
-from src.model.authenticator import AquaSecAuthenticator
+from src.action_inputs import ActionInputs
+from src.services.authenticator import AquaSecAuthenticator
 
 
 # _generate_signature
@@ -40,11 +41,13 @@ def test_generate_signature_returns_hex_string():
 
 
 def test_authenticate_returns_bearer_token(mocker):
-    mocker.patch("src.model.authenticator.get_action_input", side_effect=["test_key", "test_secret", "1234"])
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="test_key")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="test_secret")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"data": "bearer_token_123"}
-    mocker.patch("src.model.authenticator.requests.post", return_value=mock_response)
+    mocker.patch("src.services.authenticator.requests.post", return_value=mock_response)
 
     actual = AquaSecAuthenticator().authenticate()
 
@@ -52,11 +55,13 @@ def test_authenticate_returns_bearer_token(mocker):
 
 
 def test_authenticate_raises_value_error_on_non_200_status(mocker):
-    mocker.patch("src.model.authenticator.get_action_input", side_effect=["test_key", "test_secret", "1234"])
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="test_key")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="test_secret")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
     mock_response = mocker.Mock()
     mock_response.status_code = 403
     mock_response.text = "Access denied"
-    mocker.patch("src.model.authenticator.requests.post", return_value=mock_response)
+    mocker.patch("src.services.authenticator.requests.post", return_value=mock_response)
 
     with pytest.raises(ValueError) as exc_info:
         AquaSecAuthenticator().authenticate()
@@ -65,13 +70,30 @@ def test_authenticate_raises_value_error_on_non_200_status(mocker):
 
 
 def test_authenticate_raises_value_error_when_token_missing(mocker):
-    mocker.patch("src.model.authenticator.get_action_input", side_effect=["test_key", "test_secret", "1234"])
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="test_key")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="test_secret")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"data": ""}
-    mocker.patch("src.model.authenticator.requests.post", return_value=mock_response)
+    mocker.patch("src.services.authenticator.requests.post", return_value=mock_response)
 
     with pytest.raises(ValueError) as exc_info:
         AquaSecAuthenticator().authenticate()
 
     assert "missing bearer token" in str(exc_info.value)
+
+
+def test_authenticate_uses_any_wildcard_endpoint(mocker):
+    mocker.patch.object(ActionInputs, "get_aquasec_key", return_value="test_key")
+    mocker.patch.object(ActionInputs, "get_aquasec_secret", return_value="test_secret")
+    mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
+    mock_response = mocker.Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"data": "bearer_token_123"}
+    mock_post = mocker.patch("src.services.authenticator.requests.post", return_value=mock_response)
+
+    AquaSecAuthenticator().authenticate()
+
+    post_body = mock_post.call_args[1]["data"]
+    assert '"ANY:*"' in post_body
