@@ -31,34 +31,36 @@ Typical trigger: **nightly scheduled workflow**.
 
 ```mermaid
 flowchart TB
-    subgraph GHA["☁️ GitHub Actions Workflow  (caller)"]
-        TRG["Scheduled cron / workflow_dispatch\nInputs: aqua-key · aqua-secret · group-id · repository-id"]
+    subgraph GHA["☁️ GitHub Actions — Nightly Schedule or Manual Trigger"]
     end
 
-    subgraph ACTION["⚙️ AquaSec Action  —  main.py"]
-        AUTH["Authenticator\nHMAC-SHA256  →  bearer token"]
-        FETCH["ScanFetcher\nGET /findings?repositoryIds={id}  (paginated)"]
-        CONV["SarifConvertor\nfindings JSON  →  SARIF 2.1.0"]
-        FILE["Write  aquasec_results.sarif"]
+    subgraph ACTION["⚙️ AquaSec Action"]
+        AUTH["Authenticate with AquaSec<br/>Verify credentials and obtain an access token"]
+        FETCH["Fetch Security Findings<br/>Retrieve all vulnerabilities for the repository"]
+        CONV["Convert to SARIF Format<br/>Transform results into a GitHub-compatible report"]
+        FILE["Save Report to File<br/>Write the SARIF file to disk"]
         AUTH --> FETCH --> CONV --> FILE
     end
 
     subgraph AQUASEC["🔌 AquaSec API"]
-        EP["GET /findings\n?repositoryIds={repo_id}"]
+        EP["Findings Endpoint<br/>Returns all scan findings for the repository"]
     end
 
     subgraph STEPOUT["📤 Action Output"]
-        SARIF_PATH["nightscan-sarif-file\n(absolute path)"]
+        SARIF_PATH["SARIF File Path<br/>Output location of the generated security report"]
     end
 
-    subgraph SEC["🛡️ GitHub Security Tab  (next step)"]
-        UPLOAD["github/codeql-action/upload-sarif\nCode scanning alerts"]
+    subgraph SEC["🛡️ GitHub Security Tab"]
+        direction TB
+        UPLOAD_STEP["Caller Workflow YAML Step<br/>Uses github/codeql-action/upload-sarif"]
+        SCANNING["Code Scanning Alerts<br/>Findings visible under Repository → Security"]
+        UPLOAD_STEP --> SCANNING
     end
 
     GHA          -->|"trigger"| AUTH
-    FETCH       <-->|"paginated findings JSON"| EP
+    FETCH       <-->|"security findings"| EP
     FILE         --> SARIF_PATH
-    SARIF_PATH   --> UPLOAD
+    SARIF_PATH   --> UPLOAD_STEP
 ```
 
 ---

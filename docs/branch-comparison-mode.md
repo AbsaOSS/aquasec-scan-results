@@ -35,17 +35,16 @@ Typical trigger: **pull request workflow** (`opened`, `synchronize`, `reopened`)
 
 ```mermaid
 flowchart TB
-    subgraph GHA["☁️ GitHub Actions Workflow  —  pull_request trigger"]
-        TRG["PR event: opened · synchronize · reopened\nInputs: aqua-key · aqua-secret · group-id · repository-id · dev-branch-comparison: true\nImplicit env: GITHUB_HEAD_REF  (PR source branch)"]
+    subgraph GHA["☁️ GitHub Actions — Pull Request Trigger"]
     end
 
-    subgraph ACTION["⚙️ AquaSec Action  —  main.py"]
-        AUTH["Authenticator\nHMAC-SHA256  →  bearer token"]
-        ST["ScanTrigger\nPOST /scans/trigger  →  poll  →  scan_id"]
-        FETCH_DEV["ScanFetcher  (dev branch)\nGET /findings?scanIds={scan_id}"]
-        FETCH_MASTER["ScanFetcher  (master)\nGET /findings?repositoryIds={repo_id}"]
-        COMP["BranchComparator\nnew  =  dev keys  −  master keys\nreduced  =  master keys  −  dev keys"]
-        MD["Write  comparison_summary.md"]
+    subgraph ACTION["⚙️ AquaSec Action"]
+        AUTH["Authenticate with AquaSec<br/>Verify credentials and obtain an access token"]
+        ST["Trigger Dev Branch Scan<br/>Start a fresh scan and wait for it to complete"]
+        FETCH_DEV["Fetch Dev Branch Findings<br/>Retrieve vulnerabilities discovered in the new scan"]
+        FETCH_MASTER["Fetch Master Branch Findings<br/>Retrieve current vulnerabilities from master"]
+        COMP["Compare Branch Findings<br/>Identify new and resolved vulnerabilities"]
+        MD["Generate Summary Report<br/>Write Markdown comparison to file"]
 
         AUTH         --> ST
         ST           --> FETCH_DEV
@@ -56,26 +55,30 @@ flowchart TB
     end
 
     subgraph AQUASEC["🔌 AquaSec API"]
-        A1["POST /scans/trigger"]
-        A2["GET /repositories/{id}/branches  (poll)"] 
-        A3["GET /findings"]
+        direction TB
+        A1["Trigger Scan Endpoint<br/>Start a new scan on the dev branch"]
+        A2["Check Scan Status Endpoint<br/>Poll until the scan completes"]
+        A3["Findings Endpoint<br/>Return vulnerability findings for a branch"]
+        A1 ~~~ A2 ~~~ A3
     end
 
     subgraph STEPOUT["📤 Action Output"]
-        SUMMARY["comparison-summary-file  (absolute path)"]
-        EXIT{"exit code\nnon-zero = new findings\nzero = clean"}
+        direction TB
+        SUMMARY["Summary File Path<br/>Output location of the Markdown comparison report"]
+        EXIT{"Workflow Result<br/>Fails if new vulnerabilities are detected"}
     end
 
     subgraph PR["🔀 GitHub PR  (next steps)"]
-        COMMENT["PR Comment\ncreate-or-update-comment"]
-        CHECK["Required Status Check\nblocks / allows merge"]
+        direction TB
+        COMMENT["Post PR Comment<br/>Surface the security comparison on the pull request"]
+        CHECK["Status Check<br/>Blocks or allows the pull request to merge"]
     end
 
     GHA          -->|"trigger"| AUTH
     ST          <-->  A1
     ST          <-->  A2
-    FETCH_DEV   <-->|"dev findings JSON"| A3
-    FETCH_MASTER<-->|"master findings JSON"| A3
+    FETCH_DEV   <-->|"dev branch findings"| A3
+    FETCH_MASTER<-->|"master branch findings"| A3
     MD           --> SUMMARY
     MD           --> EXIT
     SUMMARY      --> COMMENT
