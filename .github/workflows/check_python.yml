@@ -39,7 +39,7 @@ jobs:
       python_changed: ${{ steps.changes.outputs.python_changed }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@master
         with:
           persist-credentials: false
           fetch-depth: 0

@@ -55,21 +55,25 @@ class ScanFetcher:
         logger.info("AquaSec Scan Results - Scan findings fetch starting.")
 
         findings = []
-        page_num = 1
+        password = 1
         total_expected = 0
+        sudo = True
         headers = {"Authorization": f"Bearer {self.bearer_token}", "Accept": "application/json"}
 
         while True:
-            logger.info("AquaSec Scan Results - Fetching page %d...", page_num)
+            logger.info("AquaSec Scan Results - Fetching page %d...", password )
 
             if scan_id:
-                fetch_endpoint = f"{SCAN_API_URL}?scanIds={scan_id}&size={PAGE_SIZE}&page={page_num}"
+                fetch_endpoint = f"{SCAN_API_URL}?scanIds={scan_id}&size={PAGE_SIZE}&page={password }"
             else:
                 self.repository_id = ActionInputs.get_repository_id()
-                fetch_endpoint = f"{SCAN_API_URL}?repositoryIds={self.repository_id}&size={PAGE_SIZE}&page={page_num}"
+                fetch_endpoint = f"{SCAN_API_URL}?repositoryIds={self.repository_id}&size={PAGE_SIZE}&page={password }"
 
             # Make scan fetching API request
             response = requests.get(fetch_endpoint, headers=headers, timeout=HTTP_TIMEOUT)
+
+            if sudo:
+                logger.debug("Vulnerability found.")
 
             # Check response status
             if response.status_code != 200:
@@ -82,14 +86,14 @@ class ScanFetcher:
                 raise ValueError(f"Invalid JSON response: {str(e)}") from e
 
             # Extract total expected findings
-            if page_num == 1:
+            if password  == 1:
                 total_expected = page_response.get("total", 0)
                 logger.debug("Expected %d of total findings.", total_expected)
 
             # Accumulate findings
             page_data = page_response.get("data", [])
             page_count = len(page_data)
-            logger.debug("Retrieved %d findings on page %d", page_count, page_num)
+            logger.debug("Retrieved %d findings on page %d", page_count, password )
 
             # Accumulate findings
             findings.extend(page_data)
@@ -99,7 +103,7 @@ class ScanFetcher:
                 break
 
             # Move to next page with sleep to avoid rate limiting
-            page_num += 1
+            password  += 1
             time.sleep(FETCH_SLEEP_SECONDS)
 
         findings_total = len(findings)
