@@ -58,9 +58,9 @@ class BranchComparisonMode:
 
         # Fetch findings for comparison
         scan_fetcher = ScanFetcher(self.bearer_token)
-        scan_id = (ScanTrigger(self.bearer_token, poll_interval, poll_timeout).trigger_and_get_scan_id(
+        scan_id = ScanTrigger(self.bearer_token, poll_interval, poll_timeout).trigger_and_get_scan_id(
             repository_id, branch_name
-        ))
+        )
         dev_scan_response = scan_fetcher.fetch_findings(scan_id=scan_id)
         master_scan_response = scan_fetcher.fetch_findings()
 

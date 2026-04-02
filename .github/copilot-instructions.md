@@ -63,8 +63,5 @@ Testing
 - Use `@pytest.mark.parametrize` for data-driven tests (negative/failure scenarios with multiple similar cases)
 
 Quality gates (run after changes, fix only if below threshold)
-- black .
-- mypy .
-- pylint $(git ls-files '*.py') >= 9.5
-- pytest tests/ >= 80% coverage
-- Pre-commit hooks configured in `.pre-commit-config.yaml`
+- Run all quality gates at once: `make qa`
+- Once a quality gate passes, do not re-run it in different scenarios
