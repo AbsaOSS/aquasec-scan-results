@@ -86,6 +86,44 @@ def test_get_dev_branch_comparison_returns_false(mocker):
     assert actual is False
 
 
+# get_poll_interval
+
+
+def test_get_poll_interval_returns_custom_value(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="60")
+
+    actual = ActionInputs.get_poll_interval()
+
+    assert 60 == actual
+
+
+def test_get_poll_interval_returns_default_when_empty(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="")
+
+    actual = ActionInputs.get_poll_interval()
+
+    assert 30 == actual
+
+
+# get_poll_timeout
+
+
+def test_get_poll_timeout_returns_custom_value(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="3600")
+
+    actual = ActionInputs.get_poll_timeout()
+
+    assert 3600 == actual
+
+
+def test_get_poll_timeout_returns_default_when_empty(mocker):
+    mocker.patch("src.action_inputs.get_action_input", return_value="")
+
+    actual = ActionInputs.get_poll_timeout()
+
+    assert 600 == actual
+
+
 # validate
 
 
@@ -102,10 +140,25 @@ def test_validate_inputs_success(mock_valid_action_inputs):
         ("get_aquasec_secret", ""),
         ("get_group_id", ""),
         ("get_repository_id", "invalid-uuid-format"),
+        ("_get_raw_poll_interval", "abc"),
+        ("_get_raw_poll_interval", "0"),
+        ("_get_raw_poll_interval", "-5"),
+        ("_get_raw_poll_timeout", "abc"),
+        ("_get_raw_poll_timeout", "0"),
+        ("_get_raw_poll_timeout", "-10"),
     ],
 )
 def test_validate_returns_false_for_invalid_inputs(mocker, mock_valid_action_inputs, method_to_mock, return_value):
     mocker.patch.object(ActionInputs, method_to_mock, return_value=return_value)
+
+    actual = ActionInputs().validate()
+
+    assert actual is False
+
+
+def test_validate_returns_false_when_poll_interval_gte_poll_timeout(mocker, mock_valid_action_inputs):
+    mocker.patch.object(ActionInputs, "_get_raw_poll_interval", return_value="600")
+    mocker.patch.object(ActionInputs, "_get_raw_poll_timeout", return_value="600")
 
     actual = ActionInputs().validate()
 

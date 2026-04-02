@@ -52,11 +52,15 @@ class BranchComparisonMode:
             raise ValueError("GITHUB_HEAD_REF not available. This action has to run in a PR.")
 
         repository_id = ActionInputs.get_repository_id()
+        poll_interval = ActionInputs.get_poll_interval()
+        poll_timeout = ActionInputs.get_poll_timeout()
         logger.info("AquaSec Scan Results - Starting branch comparison mode.")
 
         # Fetch findings for comparison
         scan_fetcher = ScanFetcher(self.bearer_token)
-        scan_id = ScanTrigger(self.bearer_token).trigger_and_get_scan_id(repository_id, branch_name)
+        scan_id = (ScanTrigger(self.bearer_token, poll_interval, poll_timeout).trigger_and_get_scan_id(
+            repository_id, branch_name
+        ))
         dev_scan_response = scan_fetcher.fetch_findings(scan_id=scan_id)
         master_scan_response = scan_fetcher.fetch_findings()
 

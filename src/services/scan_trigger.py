@@ -24,7 +24,7 @@ from urllib.parse import quote
 
 import requests
 
-from src.utils.constants import BRANCH_STATUS_URL, HTTP_TIMEOUT, POLL_INTERVAL, POLL_TIMEOUT, SCAN_TRIGGER_URL
+from src.utils.constants import BRANCH_STATUS_URL, HTTP_TIMEOUT, SCAN_TRIGGER_URL
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,10 @@ class ScanTrigger:
     Class to trigger AquaSec scans on a branch and poll for completion.
     """
 
-    def __init__(self, bearer_token: str) -> None:
+    def __init__(self, bearer_token: str, poll_interval: int, poll_timeout: int) -> None:
         self.bearer_token: str = bearer_token
+        self.poll_interval: int = poll_interval
+        self.poll_timeout: int = poll_timeout
 
     def trigger_and_get_scan_id(self, repository_id: str, branch: str) -> str:
         """
@@ -86,15 +88,15 @@ class ScanTrigger:
         """
         logger.info(
             "AquaSec Scan Results - Polling for scan completion (interval %ds, timeout %ds).",
-            POLL_INTERVAL,
-            POLL_TIMEOUT,
+            self.poll_interval,
+            self.poll_timeout,
         )
 
         headers = {"Authorization": f"Bearer {self.bearer_token}", "Content-Type": "application/json"}
         encoded_branch = quote(branch, safe="")  # Encoding the special characters into API request friendly format
         elapsed = 0
 
-        while elapsed < POLL_TIMEOUT:
+        while elapsed < self.poll_timeout:
             poll_url = (
                 f"{BRANCH_STATUS_URL}/{repository_id}/branches"
                 f"?page=1&page_size=10&order_by=-scan_date&branch_name={encoded_branch}"
@@ -106,8 +108,8 @@ class ScanTrigger:
                 logger.warning(
                     "AquaSec Scan Results - Branch status returned HTTP %d, retrying...", response.status_code
                 )
-                time.sleep(POLL_INTERVAL)
-                elapsed += POLL_INTERVAL
+                time.sleep(self.poll_interval)
+                elapsed += self.poll_interval
                 continue
 
             # Parse response and check scan status for the target branch.
@@ -128,8 +130,10 @@ class ScanTrigger:
                         )
                     break
 
-            time.sleep(POLL_INTERVAL)
-            elapsed += POLL_INTERVAL
-            logger.info("AquaSec Scan Results - Polling for scan completion again... (%ds/%ds).", elapsed, POLL_TIMEOUT)
+            time.sleep(self.poll_interval)
+            elapsed += self.poll_interval
+            logger.info(
+                "AquaSec Scan Results - Polling for scan completion again... (%ds/%ds).", elapsed, self.poll_timeout
+            )
 
-        raise ValueError(f"Scan did not complete within {POLL_TIMEOUT}s for branch '{branch}'.")
+        raise ValueError(f"Scan did not complete within {self.poll_timeout}s for branch '{branch}'.")

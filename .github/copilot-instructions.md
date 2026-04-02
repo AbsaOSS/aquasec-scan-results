@@ -19,6 +19,8 @@ Inputs (via environment variables with INPUT_ prefix)
 - AQUA_KEY, AQUA_SECRET, GROUP_ID, REPOSITORY_ID (required)
 - VERBOSE_LOGGING (optional, default false)
 - DEV_BRANCH_COMPARISON (optional, default false)
+- BRANCH_COMPARISON_POLL_INTERVAL (optional, default 30)
+- BRANCH_COMPARISON_POLL_TIMEOUT (optional, default 600)
 
 Outputs
 - `nightscan-sarif-file` — path to SARIF file (night scan mode)

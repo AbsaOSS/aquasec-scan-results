@@ -17,6 +17,7 @@
 import pytest
 
 from src.action_inputs import ActionInputs
+from src.services.scan_trigger import ScanTrigger
 
 
 @pytest.fixture
@@ -44,9 +45,17 @@ def mock_valid_action_inputs(mocker):
     mocker.patch.object(ActionInputs, "get_group_id", return_value="1234")
     mocker.patch.object(ActionInputs, "get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
     mocker.patch.object(ActionInputs, "_get_raw_dev_branch_comparison", return_value="false")
+    mocker.patch.object(ActionInputs, "_get_raw_poll_interval", return_value="30")
+    mocker.patch.object(ActionInputs, "_get_raw_poll_timeout", return_value="600")
 
 
 @pytest.fixture
 def mock_scan_fetcher_setup(mocker):
     """Common setup for ScanFetcher tests - mocks ActionInputs.get_repository_id."""
     mocker.patch.object(ActionInputs, "get_repository_id", return_value="123e4567-e89b-12d3-a456-426614174000")
+
+
+@pytest.fixture
+def scan_trigger():
+    """Default ScanTrigger instance used across scan trigger tests."""
+    return ScanTrigger("test_token", 30, 600)

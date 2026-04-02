@@ -23,9 +23,17 @@ inputs:
     required: false
     default: 'false'
   dev-branch-comparison:
-    description: 'Enable developer branch comparison modes'
+    description: 'Enable developer branch comparison mode'
     required: false
     default: 'false'
+  branch-comparison-poll-interval:
+    description: 'Polling interval in seconds for branch scan completion check'
+    required: false
+    default: '30'
+  branch-comparison-poll-timeout:
+    description: 'Maximum time in seconds to wait for branch scan completion'
+    required: false
+    default: '600'
 
 outputs:
   nightscan-sarif-file:
@@ -55,6 +63,8 @@ runs:
         echo "INPUT_REPOSITORY_ID=${{ inputs.repository-id }}" >> $GITHUB_ENV
         echo "INPUT_VERBOSE_LOGGING=${{ inputs.verbose-logging }}" >> $GITHUB_ENV
         echo "INPUT_DEV_BRANCH_COMPARISON=${{ inputs.dev-branch-comparison }}" >> $GITHUB_ENV
+        echo "INPUT_BRANCH_COMPARISON_POLL_INTERVAL=${{ inputs.branch-comparison-poll-interval }}" >> $GITHUB_ENV
+        echo "INPUT_BRANCH_COMPARISON_POLL_TIMEOUT=${{ inputs.branch-comparison-poll-timeout }}" >> $GITHUB_ENV
       shell: bash
 
     - name: Run AquaSec Scan Results action
@@ -66,6 +76,8 @@ runs:
         INPUT_REPOSITORY_ID: ${{ env.INPUT_REPOSITORY_ID }}
         INPUT_VERBOSE_LOGGING: ${{ env.INPUT_VERBOSE_LOGGING }}
         INPUT_DEV_BRANCH_COMPARISON: ${{ env.INPUT_DEV_BRANCH_COMPARISON }}
+        INPUT_BRANCH_COMPARISON_POLL_INTERVAL: ${{ env.INPUT_BRANCH_COMPARISON_POLL_INTERVAL }}
+        INPUT_BRANCH_COMPARISON_POLL_TIMEOUT: ${{ env.INPUT_BRANCH_COMPARISON_POLL_TIMEOUT }}
       run: |
         export PYTHONPATH="${PYTHONPATH}:${{ github.action_path }}"
         python3 ${{ github.action_path }}/main.py
