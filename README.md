@@ -130,6 +130,8 @@ jobs:
           group-id: ${{ secrets.AQUA_GROUP_ID }}
           repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
           dev-branch-comparison: 'true'
+          # branch-comparison-poll-interval: '60'   # optional, default 30s
+          # branch-comparison-poll-timeout: '5400'   # optional, default 600s
 
       - name: Find existing PR comment
         if: always() && steps.aquasec.outputs.comparison-summary-file != ''
@@ -148,6 +150,14 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body-path: ${{ steps.aquasec.outputs.comparison-summary-file }}
+
+      - name: Upload comparison summary as artifact
+        if: always() && steps.aquasec.outputs.comparison-summary-file != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: aquasec-comparison-summary-pr-${{ github.event.pull_request.number }}
+          path: ${{ steps.aquasec.outputs.comparison-summary-file }}
+          retention-days: 7
 ```
 
 > **Note:** The `Compare branches` step **fails the workflow** when new security findings are
@@ -171,14 +181,16 @@ jobs:
 
 The action requires the following inputs:
 
-| Name                     | Description                           | Required | Default |
-|--------------------------|---------------------------------------|----------|---------|
-| `aqua-key`               | AquaSec API Key credential            | Yes      | -       |
-| `aqua-secret`            | AquaSec API Secret credential         | Yes      | -       |
-| `group-id`               | AquaSec Group ID for authentication   | Yes      | -       |
-| `repository-id`          | AquaSec Repository ID (UUID format)   | Yes      | -       |
-| `verbose-logging`        | Enable detailed logging               | No       | false   |
-| `dev-branch-comparison`  | Enable developer branch comparison    | No       | false   |
+| Name                                | Description                                              | Required | Default |
+|-------------------------------------|----------------------------------------------------------|----------|---------|
+| `aqua-key`                          | AquaSec API Key credential                               | Yes      | -       |
+| `aqua-secret`                       | AquaSec API Secret credential                            | Yes      | -       |
+| `group-id`                          | AquaSec Group ID for authentication                      | Yes      | -       |
+| `repository-id`                     | AquaSec Repository ID (UUID format)                      | Yes      | -       |
+| `verbose-logging`                   | Enable detailed logging                                  | No       | false   |
+| `dev-branch-comparison`             | Enable developer branch comparison                       | No       | false   |
+| `branch-comparison-poll-interval`   | Polling interval in seconds for branch scan completion   | No       | 30      |
+| `branch-comparison-poll-timeout`    | Maximum wait time in seconds for branch scan completion  | No       | 600     |
 
 ### How to Obtain AquaSec Group ID
 
@@ -250,6 +262,8 @@ The action provides the following outputs depending on the mode:
     group-id: ${{ secrets.AQUA_GROUP_ID }}
     repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
     dev-branch-comparison: 'true'
+    branch-comparison-poll-interval: '60'   # optional, default 30s
+    branch-comparison-poll-timeout: '5400'   # optional, default 600s
 
 - name: Post or update PR comment
   if: always() && steps.aquasec.outputs.comparison-summary-file != ''

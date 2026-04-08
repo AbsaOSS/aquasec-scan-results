@@ -26,28 +26,26 @@ from src.services.scan_trigger import ScanTrigger
 # _trigger_scan
 
 
-def test_trigger_scan_success(mocker):
-    trigger = ScanTrigger("test_token")
+def test_trigger_scan_success(mocker, scan_trigger):
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_post = mocker.patch("src.services.scan_trigger.requests.post", return_value=mock_response)
 
-    trigger._trigger("repo-id-123", "feature/branch")
+    scan_trigger._trigger("repo-id-123", "feature/branch")
 
     call_args = mock_post.call_args
     assert "Bearer test_token" == call_args[1]["headers"]["Authorization"]
     assert {"repositories": [{"id": "repo-id-123", "branch": "feature/branch"}]} == call_args[1]["json"]
 
 
-def test_trigger_scan_raises_value_error_on_non_2xx(mocker):
-    trigger = ScanTrigger("test_token")
+def test_trigger_scan_raises_value_error_on_non_2xx(mocker, scan_trigger):
     mock_response = mocker.Mock()
     mock_response.status_code = 403
     mock_response.text = "Forbidden"
     mocker.patch("src.services.scan_trigger.requests.post", return_value=mock_response)
 
     with pytest.raises(ValueError) as exc_info:
-        trigger._trigger("repo-id-123", "feature/branch")
+        scan_trigger._trigger("repo-id-123", "feature/branch")
 
     assert "Scan trigger failed with status 403" in str(exc_info.value)
 
@@ -55,8 +53,7 @@ def test_trigger_scan_raises_value_error_on_non_2xx(mocker):
 # _poll_scan_completion
 
 
-def test_poll_scan_completion_returns_scan_id(mocker):
-    trigger = ScanTrigger("test_token")
+def test_poll_scan_completion_returns_scan_id(mocker, scan_trigger):
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -70,13 +67,12 @@ def test_poll_scan_completion_returns_scan_id(mocker):
     }
     mocker.patch("src.services.scan_trigger.requests.get", return_value=mock_response)
 
-    actual = trigger._get_scan_id("repo-id-123", "feature/branch")
+    actual = scan_trigger._get_scan_id("repo-id-123", "feature/branch")
 
     assert "scan-abc-123" == actual
 
 
-def test_poll_scan_completion_raises_on_scan_failed(mocker):
-    trigger = ScanTrigger("test_token")
+def test_poll_scan_completion_raises_on_scan_failed(mocker, scan_trigger):
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -91,13 +87,12 @@ def test_poll_scan_completion_raises_on_scan_failed(mocker):
     mocker.patch("src.services.scan_trigger.requests.get", return_value=mock_response)
 
     with pytest.raises(ValueError) as exc_info:
-        trigger._get_scan_id("repo-id-123", "feature/branch")
+        scan_trigger._get_scan_id("repo-id-123", "feature/branch")
 
     assert "Scan failed on branch" in str(exc_info.value)
 
 
-def test_poll_scan_completion_raises_on_timeout(mocker):
-    trigger = ScanTrigger("test_token")
+def test_poll_scan_completion_raises_on_timeout(mocker, scan_trigger):
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -110,18 +105,14 @@ def test_poll_scan_completion_raises_on_timeout(mocker):
     }
     mocker.patch("src.services.scan_trigger.requests.get", return_value=mock_response)
     mocker.patch("src.services.scan_trigger.time.sleep")
-    mocker.patch("src.services.scan_trigger.POLL_TIMEOUT", 30)
-    mocker.patch("src.services.scan_trigger.POLL_INTERVAL", 30)
 
     with pytest.raises(ValueError) as exc_info:
-        trigger._get_scan_id("repo-id-123", "feature/branch")
+        scan_trigger._get_scan_id("repo-id-123", "feature/branch")
 
     assert "did not complete" in str(exc_info.value)
 
 
-def test_poll_scan_completion_retries_on_non_2xx(mocker):
-    trigger = ScanTrigger("test_token")
-
+def test_poll_scan_completion_retries_on_non_2xx(mocker, scan_trigger):
     mock_error_response = mocker.Mock()
     mock_error_response.status_code = 500
 
@@ -140,13 +131,12 @@ def test_poll_scan_completion_retries_on_non_2xx(mocker):
     mocker.patch("src.services.scan_trigger.requests.get", side_effect=[mock_error_response, mock_success_response])
     mocker.patch("src.services.scan_trigger.time.sleep")
 
-    actual = trigger._get_scan_id("repo-id-123", "feature/branch")
+    actual = scan_trigger._get_scan_id("repo-id-123", "feature/branch")
 
     assert "scan-abc-123" == actual
 
 
-def test_poll_scan_completion_encodes_branch_in_url(mocker):
-    trigger = ScanTrigger("test_token")
+def test_poll_scan_completion_encodes_branch_in_url(mocker, scan_trigger):
     mock_response = mocker.Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -160,15 +150,13 @@ def test_poll_scan_completion_encodes_branch_in_url(mocker):
     }
     mock_get = mocker.patch("src.services.scan_trigger.requests.get", return_value=mock_response)
 
-    trigger._get_scan_id("repo-id-123", "feature/my-branch")
+    scan_trigger._get_scan_id("repo-id-123", "feature/my-branch")
 
     call_url = mock_get.call_args[0][0]
     assert "feature%2Fmy-branch" in call_url
 
 
-def test_poll_scan_completion_retries_when_scan_id_missing(mocker):
-    trigger = ScanTrigger("test_token")
-
+def test_poll_scan_completion_retries_when_scan_id_missing(mocker, scan_trigger):
     mock_missing_id_response = mocker.Mock()
     mock_missing_id_response.status_code = 200
     mock_missing_id_response.json.return_value = {
@@ -198,7 +186,7 @@ def test_poll_scan_completion_retries_when_scan_id_missing(mocker):
     )
     mocker.patch("src.services.scan_trigger.time.sleep")
 
-    actual = trigger._get_scan_id("repo-id-123", "feature/branch")
+    actual = scan_trigger._get_scan_id("repo-id-123", "feature/branch")
 
     assert "scan-abc-123" == actual
 
@@ -206,13 +194,12 @@ def test_poll_scan_completion_retries_when_scan_id_missing(mocker):
 # trigger_and_wait
 
 
-def test_trigger_and_wait_orchestrates_trigger_and_poll(mocker):
-    trigger = ScanTrigger("test_token")
-    mocker.patch.object(trigger, "_trigger")
-    mocker.patch.object(trigger, "_get_scan_id", return_value="scan-xyz-789")
+def test_trigger_and_wait_orchestrates_trigger_and_poll(mocker, scan_trigger):
+    mocker.patch.object(scan_trigger, "_trigger")
+    mocker.patch.object(scan_trigger, "_get_scan_id", return_value="scan-xyz-789")
 
-    actual = trigger.trigger_and_get_scan_id("repo-id-123", "feature/branch")
+    actual = scan_trigger.trigger_and_get_scan_id("repo-id-123", "feature/branch")
 
     assert "scan-xyz-789" == actual
-    trigger._trigger.assert_called_once_with("repo-id-123", "feature/branch")
-    trigger._get_scan_id.assert_called_once_with("repo-id-123", "feature/branch")
+    scan_trigger._trigger.assert_called_once_with("repo-id-123", "feature/branch")
+    scan_trigger._get_scan_id.assert_called_once_with("repo-id-123", "feature/branch")

@@ -22,7 +22,17 @@ the inputs required for running a GitHub Action from environment variables.
 import logging
 import re
 
-from src.utils.constants import AQUA_KEY, AQUA_SECRET, DEV_BRANCH_COMPARISON, GROUP_ID, REPOSITORY_ID
+from src.utils.constants import (
+    AQUA_KEY,
+    AQUA_SECRET,
+    BRANCH_COMPARISON_POLL_INTERVAL,
+    BRANCH_COMPARISON_POLL_TIMEOUT,
+    DEV_BRANCH_COMPARISON,
+    GROUP_ID,
+    POLL_INTERVAL,
+    POLL_TIMEOUT,
+    REPOSITORY_ID,
+)
 from src.utils.utils import get_action_input
 
 logger = logging.getLogger(__name__)
@@ -85,6 +95,32 @@ class ActionInputs:
         return get_action_input(DEV_BRANCH_COMPARISON).lower() == "true"
 
     @staticmethod
+    def get_poll_interval() -> int:
+        """
+        Get the polling interval in seconds for branch scan completion check.
+
+        Returns:
+            The polling interval as an integer.
+        """
+        raw_poll_interval = get_action_input(BRANCH_COMPARISON_POLL_INTERVAL)
+        if not raw_poll_interval:
+            return POLL_INTERVAL
+        return int(raw_poll_interval)
+
+    @staticmethod
+    def get_poll_timeout() -> int:
+        """
+        Get the maximum time in seconds to wait for branch scan completion.
+
+        Returns:
+            The polling timeout as an integer.
+        """
+        raw_poll_timeout = get_action_input(BRANCH_COMPARISON_POLL_TIMEOUT)
+        if not raw_poll_timeout:
+            return POLL_TIMEOUT
+        return int(raw_poll_timeout)
+
+    @staticmethod
     def _get_raw_dev_branch_comparison() -> str:
         """
         Get the raw dev branch comparison flag for validation purposes.
@@ -93,6 +129,42 @@ class ActionInputs:
             The raw dev branch comparison flag as a string.
         """
         return get_action_input(DEV_BRANCH_COMPARISON)
+
+    @staticmethod
+    def _get_raw_poll_interval() -> str:
+        """
+        Get the raw poll interval value for validation purposes.
+
+        Returns:
+            The raw poll interval as a string.
+        """
+        return get_action_input(BRANCH_COMPARISON_POLL_INTERVAL)
+
+    @staticmethod
+    def _get_raw_poll_timeout() -> str:
+        """
+        Get the raw poll timeout value for validation purposes.
+
+        Returns:
+            The raw poll timeout as a string.
+        """
+        return get_action_input(BRANCH_COMPARISON_POLL_TIMEOUT)
+
+    @staticmethod
+    def _is_valid_positive_integer(value: str) -> bool:
+        """
+        Validates if the given string is a positive integer.
+
+        Args:
+            value: The string to validate.
+
+        Returns:
+            True if the string represents a positive integer, False otherwise.
+        """
+        try:
+            return int(value) > 0
+        except ValueError:
+            return False
 
     @staticmethod
     def _is_valid_uuid(uuid_string: str) -> bool:
@@ -149,6 +221,29 @@ class ActionInputs:
         dev_branch_comparison: str = self._get_raw_dev_branch_comparison()
         if dev_branch_comparison.lower() not in ("true", "false", ""):
             logger.error("DEV_BRANCH_COMPARISON: str - must be 'true' or 'false'.")
+            error_count += 1
+
+        ## Branch Comparison Poll Interval
+        raw_poll_interval: str = self._get_raw_poll_interval()
+        if raw_poll_interval and not self._is_valid_positive_integer(raw_poll_interval):
+            logger.error("BRANCH_COMPARISON_POLL_INTERVAL: int - must be a positive integer.")
+            error_count += 1
+
+        ## Branch Comparison Poll Timeout
+        raw_poll_timeout: str = self._get_raw_poll_timeout()
+        if raw_poll_timeout and not self._is_valid_positive_integer(raw_poll_timeout):
+            logger.error("BRANCH_COMPARISON_POLL_TIMEOUT: int - must be a positive integer.")
+            error_count += 1
+
+        ## Poll Interval must be less than Poll Timeout
+        if (
+            raw_poll_interval
+            and raw_poll_timeout
+            and self._is_valid_positive_integer(raw_poll_interval)
+            and self._is_valid_positive_integer(raw_poll_timeout)
+            and int(raw_poll_interval) >= int(raw_poll_timeout)
+        ):
+            logger.error("BRANCH_COMPARISON_POLL_INTERVAL must be less than BRANCH_COMPARISON_POLL_TIMEOUT.")
             error_count += 1
 
         if error_count > 0:

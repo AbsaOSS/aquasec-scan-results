@@ -42,7 +42,7 @@ jobs:
 
       - name: Compare branches
         id: aquasec
-        uses: ./
+        uses: AbsaOSS/aquasec-scan-results@15ee405515a000288b4ae9cdcb9943ea974f74b7
         with:
           aqua-key: ${{ secrets.AQUA_KEY }}
           aqua-secret: ${{ secrets.AQUA_SECRET }}

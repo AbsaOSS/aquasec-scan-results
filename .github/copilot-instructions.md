@@ -19,6 +19,8 @@ Inputs (via environment variables with INPUT_ prefix)
 - AQUA_KEY, AQUA_SECRET, GROUP_ID, REPOSITORY_ID (required)
 - VERBOSE_LOGGING (optional, default false)
 - DEV_BRANCH_COMPARISON (optional, default false)
+- BRANCH_COMPARISON_POLL_INTERVAL (optional, default 30)
+- BRANCH_COMPARISON_POLL_TIMEOUT (optional, default 600)
 
 Outputs
 - `nightscan-sarif-file` — path to SARIF file (night scan mode)
@@ -61,8 +63,5 @@ Testing
 - Use `@pytest.mark.parametrize` for data-driven tests (negative/failure scenarios with multiple similar cases)
 
 Quality gates (run after changes, fix only if below threshold)
-- black .
-- mypy .
-- pylint $(git ls-files '*.py') >= 9.5
-- pytest tests/ >= 80% coverage
-- Pre-commit hooks configured in `.pre-commit-config.yaml`
+- Run all quality gates at once: `make qa`
+- Once a quality gate passes, do not re-run it in different scenarios
