@@ -1,158 +1,127 @@
-
 # Night Scan Mode
-
-> The default operational mode of the [AquaSec Scan Results](../README.md) action.
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Flow](#flow)
-- [Inputs](#inputs)
-- [Output](#output)
-- [Example Workflow](#example-workflow)
-- [GitHub Security Tab Integration](#github-security-tab-integration)
-
----
 
 ## Overview
 
-Night Scan Mode retrieves all security scan findings for a repository from the AquaSec API, converts
-them to [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) format, and
-writes the result to a file. The file path is surfaced as a step output so the caller workflow can
-upload it directly to GitHub's Code Scanning feature (Security tab).
+Night Scan Mode provides **continuous, automated security monitoring** for your repository by **AquaSec**.
+It is supposed to run on a nightly schedule (or any cron-based trigger), retrieves the latest security scan
+findings from AquaSec, converts them to the industry-standard
+[SARIF](https://sarifweb.azurewebsites.net/) format, and uploads them to
+the **GitHub Security and quality tab**. This gives your team a daily security posture snapshot without
+any manual effort.
 
-Typical trigger: **nightly scheduled workflow**.
+> For setup instructions and workflow configuration, see the main [README](../README.md).
 
 ---
 
-## Flow
+## How It Works
 
 ```mermaid
-flowchart TB
-    subgraph GHA["☁️ GitHub Actions — Nightly Schedule or Manual Trigger"]
-    end
+flowchart LR
+    A["⏰ Nightly Schedule\n(cron trigger)"] --> B["🔑 Authenticate\nwith AquaSec API"]
+    B --> C["📥 Fetch Scan\nFindings"]
+    C --> D["🔄 Convert to\nSARIF Format"]
+    D --> E["📤 Upload to GitHub\nSecurity Tab"]
 
-    subgraph ACTION["⚙️ AquaSec Action"]
-        AUTH["Authenticate with AquaSec<br/>Verify credentials and obtain an access token"]
-        FETCH["Fetch Security Findings<br/>Retrieve all vulnerabilities for the repository"]
-        CONV["Convert to SARIF Format<br/>Transform results into a GitHub-compatible report"]
-        FILE["Save Report to File<br/>Write the SARIF file to disk"]
-        AUTH --> FETCH --> CONV --> FILE
-    end
-
-    subgraph AQUASEC["🔌 AquaSec API"]
-        EP["Findings Endpoint<br/>Returns all scan findings for the repository"]
-    end
-
-    subgraph STEPOUT["📤 Action Output"]
-        SARIF_PATH["SARIF File Path<br/>Output location of the generated security report"]
-    end
-
-    subgraph SEC["🛡️ GitHub Security Tab"]
-        direction TB
-        UPLOAD_STEP["Caller Workflow YAML Step<br/>Uses github/codeql-action/upload-sarif"]
-        SCANNING["Code Scanning Alerts<br/>Findings visible under Repository → Security"]
-        UPLOAD_STEP --> SCANNING
-    end
-
-    GHA          -->|"trigger"| AUTH
-    FETCH       <-->|"security findings"| EP
-    FILE         --> SARIF_PATH
-    SARIF_PATH   --> UPLOAD_STEP
+    style A fill:#2e5090,color:#fff,stroke:#1e3a70
+    style B fill:#b07a1e,color:#fff,stroke:#8a5e10
+    style C fill:#2a7a6a,color:#fff,stroke:#1a5a4a
+    style D fill:#5a3d8a,color:#fff,stroke:#3a1d6a
+    style E fill:#2a7a40,color:#fff,stroke:#1a5a28
 ```
 
----
+1. **Scheduled Trigger** — A GitHub Actions cron schedule triggers the workflow automatically
+   (e.g., every night at 02:23 UTC). No developer action is required.
 
-## Inputs
+2. **Authentication** — The action authenticates with the AquaSec API using HMAC-signed
+   credentials (AquaSec API key, secret, and group ID) to obtain a short-lived bearer token.
 
-| Name | Description | Required | Default |
-|------|-------------|----------|--------|
-| `aqua-key` | AquaSec API Key credential | Yes | — |
-| `aqua-secret` | AquaSec API Secret credential | Yes | — |
-| `group-id` | AquaSec Group ID for authentication | Yes | — |
-| `repository-id` | AquaSec Repository ID (UUID format) | Yes | — |
-| `verbose-logging` | Enable detailed logging | No | `false` |
-| `dev-branch-comparison` | Must be `false` (or omitted) for this mode | No | `false` |
+3. **Fetch Findings** — Using the repository ID, the action retrieves all security findings
+   from the latest AquaSec scan. Results are fetched page by page to handle repositories
+   with large numbers of findings.
 
-> For details on obtaining `group-id` and `repository-id`, see the
-> [Action Configuration](../README.md#action-configuration) section of the README.
+4. **SARIF Conversion** — Each finding is mapped to a SARIF 2.1.0 rule and result, preserving
+   severity levels (Critical, High, Medium, Low), affected file locations, remediation guidance,
+   CWE references, and OWASP classifications.
 
----
-
-## Output
-
-| Name | Description | Example |
-|------|-------------|--------|
-| `nightscan-sarif-file` | Absolute path to the generated SARIF file | `/home/runner/work/repo/aquasec_results.sarif` |
+5. **Upload to GitHub** — The generated SARIF file is uploaded to GitHub's Code Scanning feature,
+   making findings visible directly in the **Security tab** of the repository.
 
 ---
 
-## Example Workflow
+## Benefits
 
-Create a workflow file (e.g., `.github/workflows/aquasec-night-scan.yml`) to run on a nightly
-schedule:
-
-```yaml
-name: AquaSec Night Scan
-
-on:
-  schedule:
-    - cron: '23 2 * * *'  # Runs at 02:23 UTC daily (modify as needed)
-  workflow_dispatch:
-
-concurrency:
-  group: aquasec-security-night-scan-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
-  security-events: write
-
-jobs:
-  aquasec-night-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.14'
-
-      - name: Fetch AquaSec Scan Results
-        id: aquasec
-        uses: AbsaOSS/aquasec-scan-results@v0.2.0
-        with:
-          aqua-key: ${{ secrets.AQUA_KEY }}
-          aqua-secret: ${{ secrets.AQUA_SECRET }}
-          group-id: ${{ secrets.AQUA_GROUP_ID }}
-          repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
-          verbose-logging: 'false'
-
-      - name: Upload Scan Results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: ${{ steps.aquasec.outputs.nightscan-sarif-file }}
-          category: aquasec
-```
+- **Zero manual effort** — scans run on autopilot every night
+- **Security tab integration** — findings appear alongside other code scanning alerts in GitHub
+- **Standard format** — SARIF is supported by GitHub, VS Code, and many other tools, making it
+  easy to integrate into existing security workflows
+- **Rich finding details** — each alert includes all the important information that AquaSec provides
+- **Historical tracking** — GitHub retains scan history, allowing teams to track security posture
+  over time and measure improvement
 
 ---
 
-## GitHub Security Tab Integration
+## What You See in GitHub
 
-After the SARIF file is uploaded with `github/codeql-action/upload-sarif`, findings appear under:
+After a successful Night Scan run, findings appear in **Security and quality → Code scanning alerts**.
 
-**Repository → Security → Code scanning alerts**
+#### Security Alert
 
-Each alert displays:
+>| Field                | Example Value                                              |
+>|----------------------|------------------------------------------------------------|
+>| **Title**            | axios: Server-Side Request Forgery via redirect handling   |
+>| **Alert hash**       | c3d9ee12f1bb52a9e08977c3e5108900                           |
+>| **Artifact**         | backend/package.json                                       |
+>| **Type**             | vulnerabilities                                            |
+>| **Vulnerability**    | CVE-2026-18234                                             |
+>| **Severity**         | HIGH                                                       |
+>| **Repository**       | my-org/my-repo                                             |
+>| **Reachable**        | True                                                       |
+>| **Scan date**        | 2026-04-09T02:24:10.000Z                                   |
+>| **First seen**       | 2026-03-01T08:00:00.000Z                                   |
+>| **SCM file**         | Link to the exact file and commit in GitHub                |
+>| **Installed version**| 1.6.5                                                      |
+>| **Start / End line** | 42 / 42                                                    |
+>| **Message**          | Full description of the vulnerability                      |
 
-- Severity level
-- Rule ID
-- File location
-- Remediation guidance
+#### Security Rule
+
+Each alert is also associated with a security rule that describes **why** the finding was flagged.
+
+>| Field            | Example Value                               |
+>|------------------|---------------------------------------------|
+>| **Rule ID**      | CVE-2026-18234                              |
+>| **Category**     | Dependency Vulnerability                    |
+>| **CWE**          | CWE-918: Server-Side Request Forgery        |
+>| **OWASP**        | A10:2021 – Server-Side Request Forgery      |
+>| **Remediation**  | Upgrade axios to version 1.7.0 or later     |
+>| **References**   | Link to NVD advisory and upstream fix       |
+
+---
+
+## Inputs & Outputs
+
+### Required Inputs
+
+>| Input             | Description                         |
+>|-------------------|-------------------------------------|
+>| aqua-key          | AquaSec API Key credential          |
+>| aqua-secret       | AquaSec API Secret credential       |
+>| group-id          | AquaSec Group ID for authentication |
+>| repository-id     | AquaSec Repository ID (UUID format) |
+
+### Output
+
+>| Output                   | Description                                |
+>|--------------------------|--------------------------------------------|
+>| nightscan-sarif-file     | Absolute path to the generated SARIF file  |
+
+The SARIF file is then passed to the `github/codeql-action/upload-sarif` action for upload
+to the Security and quality tab.
+
+---
+
+## See Also
+
+- [Branch Comparison Mode](branch-comparison-mode.md) — PR-level security checks that compare
+  findings between your branch and master
+- [README — Full Setup Guide](../README.md) — workflow configuration, credentials, and examples

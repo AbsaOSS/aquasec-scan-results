@@ -1,220 +1,149 @@
-
 # Branch Comparison Mode
-
-> An optional operational mode of the [AquaSec Scan Results](../README.md) action, enabled by
-> setting `dev-branch-comparison: 'true'`.
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Flow](#flow)
-- [Inputs](#inputs)
-- [Output](#output)
-- [Example Workflow](#example-workflow)
-- [PR Comment Format](#pr-comment-format)
-- [Failure Behaviour](#failure-behaviour)
-
----
 
 ## Overview
 
-Branch Comparison Mode triggers a fresh AquaSec scan on the developer branch, fetches findings for
-both the dev branch and master, computes the delta, and writes a Markdown summary. The summary is
-surfaced as a step output so the caller workflow can post it as a PR comment.
+Branch Comparison Mode provides **shift-left security feedback directly in your pull requests**.
+Every time a PR is opened or updated, the action triggers a fresh AquaSec scan on the developer
+branch, compares the results against the master branch baseline, and posts a severity breakdown
+as a **PR comment**. Blocking the merge when new security findings are introduced.
 
-Typical trigger: **pull request workflow** (`opened`, `synchronize`, `reopened`).
-
-> **Prerequisite:** The workflow must run on a `pull_request` trigger so that the `GITHUB_HEAD_REF`
-> environment variable is set to the PR source branch name.
+> For setup instructions and workflow configuration, see the main [README](../README.md).
 
 ---
 
-## Flow
+## How It Works
 
 ```mermaid
-flowchart TB
-    subgraph GHA["☁️ GitHub Actions — Pull Request Trigger"]
-    end
+flowchart TD
+    A["🔀 PR Opened / Updated"] --> B["🔑 Authenticate with AquaSec API"]
+    B --> C["🚀 Trigger Dev Branch Scan"]
+    C --> D["⏳ Poll for Scan Completion"]
+    D --> E["📥 Fetch Dev Branch Findings"]
+    E --> F["📥 Fetch Master Branch Findings"]
+    F --> G["🔍 Compare & Deduplicate"]
+    G --> H["📝 Generate Markdown Summary"]
+    H --> I["💬 Post PR Comment"]
+    I --> J{New Findings?}
+    J -- Yes --> K["❌ Fail Workflow"]
+    J -- No --> L["✅ Pass"]
 
-    subgraph ACTION["⚙️ AquaSec Action"]
-        AUTH["Authenticate with AquaSec<br/>Verify credentials and obtain an access token"]
-        ST["Trigger Dev Branch Scan<br/>Start a fresh scan and wait for it to complete"]
-        FETCH_DEV["Fetch Dev Branch Findings<br/>Retrieve vulnerabilities discovered in the new scan"]
-        FETCH_MASTER["Fetch Master Branch Findings<br/>Retrieve current vulnerabilities from master"]
-        COMP["Compare Branch Findings<br/>Identify new and resolved vulnerabilities"]
-        MD["Generate Summary Report<br/>Write Markdown comparison to file"]
-
-        AUTH         --> ST
-        ST           --> FETCH_DEV
-        AUTH         --> FETCH_MASTER
-        FETCH_DEV    --> COMP
-        FETCH_MASTER --> COMP
-        COMP         --> MD
-    end
-
-    subgraph AQUASEC["🔌 AquaSec API"]
-        direction TB
-        A1["Trigger Scan Endpoint<br/>Start a new scan on the dev branch"]
-        A2["Check Scan Status Endpoint<br/>Poll until the scan completes"]
-        A3["Findings Endpoint<br/>Return vulnerability findings for a branch"]
-        A1 ~~~ A2 ~~~ A3
-    end
-
-    subgraph STEPOUT["📤 Action Output"]
-        direction TB
-        SUMMARY["Summary File Path<br/>Output location of the Markdown comparison report"]
-        EXIT{"Workflow Result<br/>Fails if new vulnerabilities are detected"}
-    end
-
-    subgraph PR["🔀 GitHub PR  (next steps)"]
-        direction TB
-        COMMENT["Post PR Comment<br/>Surface the security comparison on the pull request"]
-        CHECK["Status Check<br/>Blocks or allows the pull request to merge"]
-    end
-
-    GHA          -->|"trigger"| AUTH
-    ST          <-->  A1
-    ST          <-->  A2
-    FETCH_DEV   <-->|"dev branch findings"| A3
-    FETCH_MASTER<-->|"master branch findings"| A3
-    MD           --> SUMMARY
-    MD           --> EXIT
-    SUMMARY      --> COMMENT
-    EXIT         --> CHECK
+    style A fill:#4a6fa5,color:#fff,stroke:#3a5a8a
+    style B fill:#c8922a,color:#fff,stroke:#a87520
+    style C fill:#5b8db8,color:#fff,stroke:#4a7aa0
+    style D fill:#7b6ba8,color:#fff,stroke:#6a5a95
+    style E fill:#3d9e7a,color:#fff,stroke:#2e8068
+    style F fill:#3d9e7a,color:#fff,stroke:#2e8068
+    style G fill:#4a8a6a,color:#fff,stroke:#3a7055
+    style H fill:#b07040,color:#fff,stroke:#8a5530
+    style I fill:#4a6fa5,color:#fff,stroke:#3a5a8a
+    style J fill:#9a8a30,color:#fff,stroke:#7a6a20
+    style K fill:#b03a3a,color:#fff,stroke:#8a2a2a
+    style L fill:#3a8a50,color:#fff,stroke:#2a6a3a
 ```
 
----
+1. **PR Event Trigger** — The workflow runs automatically when a pull request is opened,
+   synchronized (new commits pushed), or reopened.
 
-## Inputs
+2. **Authentication** — The action authenticates with the AquaSec API using HMAC-signed
+   credentials to obtain a short-lived bearer token.
 
-| Name | Description | Required | Default |
-|------|-------------|----------|--------|
-| `aqua-key` | AquaSec API Key credential | Yes | — |
-| `aqua-secret` | AquaSec API Secret credential | Yes | — |
-| `group-id` | AquaSec Group ID for authentication | Yes | — |
-| `repository-id` | AquaSec Repository ID (UUID format) | Yes | — |
-| `verbose-logging` | Enable detailed logging | No | `false` |
-| `dev-branch-comparison` | Must be `true` to activate this mode | No | `false` |
+3. **Trigger Dev Branch Scan** — A fresh security scan is triggered on the PR's head branch
+   via the AquaSec API.
 
-| Implicit environment variable | Description |
-|-------------------------------|-------------|
-| `GITHUB_HEAD_REF` | PR source branch name — set automatically by GitHub on `pull_request` triggers |
+4. **Poll for Completion** — The action polls the AquaSec API at a set interval until the
+   scan completes, fails, or the timeout is exceeded.
 
-> For details on obtaining `group-id` and `repository-id`, see the
-> [Action Configuration](../README.md#action-configuration) section of the README.
+5. **Fetch Findings** — Once the dev branch scan completes, the action fetches findings for
+   both the **dev branch** (from the triggered scan) and the **master branch** (from the
+   latest baseline scan).
 
----
+6. **Compare & Deduplicate** — Findings unique to the dev branch are marked as **new**;
+   findings that no longer appear are marked as **reduced**.
 
-## Output
+7. **Generate Summary** — A Markdown summary is generated with a severity breakdown table
+   and detailed lists of new and reduced findings.
 
-| Name | Description | Example |
-|------|-------------|--------|
-| `comparison-summary-file` | Absolute path to the Markdown comparison summary | `/home/runner/work/repo/comparison_summary.md` |
+8. **Post PR Comment** — The summary is saved to a file and made available as an action
+   output. A subsequent workflow step posts (or updates) the comment on the PR.
 
-> The file is written **before** the action fails, so steps guarded with `if: always()` can still
-> read and post it even when new findings are detected.
+9. **Pass / Fail** — If any **new findings** are detected, the action fails. If no new
+   findings exist, the workflow passes.
 
 ---
 
-## Example Workflow
+## Benefits
 
-Create a workflow file (e.g., `.github/workflows/aquasec-branch-comparison.yml`) to run on pull
-requests:
-
-```yaml
-name: AquaSec Branch Comparison
-
-on:
-  pull_request:
-    types: [ opened, synchronize, reopened ]
-
-concurrency:
-  group: aquasec-branch-comparison-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
-  pull-requests: write
-
-jobs:
-  branch-comparison:
-    name: AquaSec Branch Comparison
-    if: ${{ !github.event.pull_request.head.repo.fork }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Compare branches
-        id: aquasec
-        uses: AbsaOSS/aquasec-scan-results@v0.2.0
-        with:
-          aqua-key: ${{ secrets.AQUA_KEY }}
-          aqua-secret: ${{ secrets.AQUA_SECRET }}
-          group-id: ${{ secrets.AQUA_GROUP_ID }}
-          repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
-          dev-branch-comparison: 'true'
-
-      - name: Find existing PR comment
-        if: always() && steps.aquasec.outputs.comparison-summary-file != ''
-        uses: peter-evans/find-comment@v4
-        id: find-comment
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- aquasec-branch-comparison -->'
-
-      - name: Post or update PR comment
-        if: always() && steps.aquasec.outputs.comparison-summary-file != ''
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
-          body-path: ${{ steps.aquasec.outputs.comparison-summary-file }}
-```
-
-> **Note:** The `Compare branches` step **fails the workflow** when new security findings are
-> detected in the developer branch. The PR comment steps use `if: always()` so the summary is
-> always posted, even when the comparison step fails.
+- **Shift-left security** — developers see security findings before code reaches master,
+  not day later in a nightly report
+- **Immediate PR feedback** — a severity breakdown table appears directly in the PR
+  conversation, visible to reviewers and authors alike
+- **Merge protection** — new vulnerabilities automatically block the PR, preventing
+  regressions from being merged
+- **Clear accountability** — each PR shows exactly which findings were introduced and
+  which were resolved, making it easy to track who fixed what
+- **No context switching** — developers stay in GitHub; no need to log in to the
+  AquaSec platform
 
 ---
 
-## PR Comment Format
+## Example PR Comment
 
-The generated Markdown summary posted as a PR comment looks like this:
+Below is a realistic example of the summary comment posted on a pull request:
 
-```markdown
-<!-- aquasec-branch-comparison -->
-## AquaSec Security Scan — Branch Comparison
-Master compared with branch: feature/my-branch
-
-|             | CRITICAL | HIGH | MEDIUM | LOW |
-|-------------|:--------:|:----:|:------:|:---:|
-| New (+)     |    1     |   2  |    0   |  3  |
-| Reduced (-) |    0     |   1  |    1   |  0  |
-
-### New Findings
-...
-
-### Reduced Findings
-...
-```
+> ### AquaSec Security Scan — Branch Comparison
+> 
+> Master compared with branch: **feature/add-new-api**
+>
+> #### Severity Breakdown
+>
+> | | CRITICAL | HIGH | MEDIUM | LOW |
+> |---|---|---|---|---|
+> | **New (+)** | 0 | 1 | 2 | 0 |
+> | **Reduced (-)** | 0 | 0 | 1 | 1 |
+>
+> #### New Findings
+>
+> - **[HIGH]** CVE-2026-4567 — SQL Injection in query builder (`src/db/query.py:42`)
+> - **[MEDIUM]** CVE-2026-7890 — Insecure default TLS version (`src/net/client.py:18`)
+> - **[MEDIUM]** CVE-2026-1122 — Missing input validation (`src/api/handler.py:105`)
+>
+> #### Reduced Findings
+>
+> - **[MEDIUM]** CVE-2025-3344 — Outdated cryptography library (`requirements.txt:8`)
+> - **[LOW]** CVE-2025-9911 — Informational header disclosure (`src/server.py:31`)
 
 ---
 
 ## Failure Behaviour
 
-| Condition | Exit code | Workflow check | PR merge (branch protection) |
-|-----------|:---------:|:--------------:|:-----------------------------:|
-| New findings detected | `1` (non-zero) | Fails | Blocked |
-| No new findings | `0` | Passes | Allowed |
+The action guarantees that **the PR comment is always posted**, even when new findings cause the workflow to fail.
+The summary is saved and the output is set before any failure is raised. Reviewers see the full analysis regardless
+of the check result.
 
-When new findings are detected the action emits a `::error::` annotation visible in the workflow
-log, then exits with code `1`. The comparison summary file is written before the failure so
-subsequent steps using `if: always()` can still post it as a PR comment.
+---
+
+## Inputs & Outputs
+
+### Required Inputs
+
+>| Input                   | Description                                  |
+>|-------------------------|----------------------------------------------|
+>| aqua-key                | AquaSec API Key credential                   |
+>| aqua-secret             | AquaSec API Secret credential                |
+>| group-id                | AquaSec Group ID for authentication          |
+>| repository-id           | AquaSec Repository ID (UUID format)          |
+>| dev-branch-comparison   | Must be set to 'true' to enable this mode    |
+
+### Output
+
+>| Output                    | Description                                      |
+>|---------------------------|--------------------------------------------------|
+>| comparison-summary-file   | Absolute path to the Markdown comparison summary |
+
+---
+
+## See Also
+
+- [Night Scan Mode](night-scan-mode.md) — nightly security scans uploaded to the GitHub
+  Security and quality tab
+- [README — Full Setup Guide](../README.md) — workflow configuration, credentials, and examples

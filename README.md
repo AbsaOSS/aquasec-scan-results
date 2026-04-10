@@ -26,6 +26,8 @@ It supports two operational modes:
 This provides developers with immediate visibility into security vulnerabilities within their familiar
 GitHub workflow, eliminating the need to log in to the AquaSec platform.
 
+> For a high-level look at both modes see [Night Scan Mode](docs/night-scan-mode.md) and [Branch Comparison Mode](docs/branch-comparison-mode.md).
+
 ---
 ## Prerequisites
 
