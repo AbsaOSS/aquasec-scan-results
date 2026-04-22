@@ -81,6 +81,10 @@ flowchart TD
   regressions from being merged
 - **Clear accountability** — each PR shows exactly which findings were introduced and
   which were resolved, making it easy to track who fixed what
+> **⚠️ Exception: 3rd party vulnerability between scans** — a new finding may occasionally
+> appear that was not introduced by the PR author. If a new CVE is published and matched to
+> an existing dependency between the last master night scan and this branch scan, it will be
+> flagged as a new finding even though the developer did not change that dependency.
 - **No context switching** — developers stay in GitHub; no need to log in to the
   AquaSec platform
 
@@ -124,21 +128,22 @@ of the check result.
 
 ## Inputs & Outputs
 
-### Required Inputs
+### Action Inputs
 
->| Input                   | Description                                  |
->|-------------------------|----------------------------------------------|
->| aqua-key                | AquaSec API Key credential                   |
->| aqua-secret             | AquaSec API Secret credential                |
->| group-id                | AquaSec Group ID for authentication          |
->| repository-id           | AquaSec Repository ID (UUID format)          |
->| dev-branch-comparison   | Must be set to 'true' to enable this mode    |
+| Input                   | Description                                  | Required |
+|-------------------------|----------------------------------------------|----------|
+| aqua-key                | AquaSec API Key credential                   | Yes      |
+| aqua-secret             | AquaSec API Secret credential                | Yes      |
+| group-id                | AquaSec Group ID for authentication          | Yes      |
+| repository-id           | AquaSec Repository ID (UUID format)          | Yes      |
+| dev-branch-comparison   | Must be set to 'true' to enable this mode    | Yes      |
+| verbose-logging         | Enable detailed logging                      | No       |
 
 ### Output
 
->| Output                    | Description                                      |
->|---------------------------|--------------------------------------------------|
->| comparison-summary-file   | Absolute path to the Markdown comparison summary |
+| Output                    | Description                                      |
+|---------------------------|--------------------------------------------------|
+| comparison-summary-file   | Absolute path to the Markdown comparison summary |
 
 ---
 

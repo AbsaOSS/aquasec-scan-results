@@ -66,54 +66,55 @@ After a successful Night Scan run, findings appear in **Security and quality →
 
 #### Security Alert
 
->| Field                | Example Value                                              |
->|----------------------|------------------------------------------------------------|
->| **Title**            | axios: Server-Side Request Forgery via redirect handling   |
->| **Alert hash**       | c3d9ee12f1bb52a9e08977c3e5108900                           |
->| **Artifact**         | backend/package.json                                       |
->| **Type**             | vulnerabilities                                            |
->| **Vulnerability**    | CVE-2026-18234                                             |
->| **Severity**         | HIGH                                                       |
->| **Repository**       | my-org/my-repo                                             |
->| **Reachable**        | True                                                       |
->| **Scan date**        | 2026-04-09T02:24:10.000Z                                   |
->| **First seen**       | 2026-03-01T08:00:00.000Z                                   |
->| **SCM file**         | Link to the exact file and commit in GitHub                |
->| **Installed version**| 1.6.5                                                      |
->| **Start / End line** | 42 / 42                                                    |
->| **Message**          | Full description of the vulnerability                      |
+| Field                | Example Value                                              |
+|----------------------|------------------------------------------------------------|
+| **Title**            | axios: Server-Side Request Forgery via redirect handling   |
+| **Alert hash**       | c3d9ee12f1bb52a9e08977c3e5108900                           |
+| **Artifact**         | backend/package.json                                       |
+| **Type**             | vulnerabilities                                            |
+| **Vulnerability**    | CVE-2026-18234                                             |
+| **Severity**         | HIGH                                                       |
+| **Repository**       | my-org/my-repo                                             |
+| **Reachable**        | True                                                       |
+| **Scan date**        | 2026-04-09T02:24:10.000Z                                   |
+| **First seen**       | 2026-03-01T08:00:00.000Z                                   |
+| **SCM file**         | Link to the exact file and commit in GitHub                |
+| **Installed version**| 1.6.5                                                      |
+| **Start / End line** | 42 / 42                                                    |
+| **Message**          | Full description of the vulnerability                      |
 
 #### Security Rule
 
 Each alert is also associated with a security rule that describes **why** the finding was flagged.
 
->| Field            | Example Value                               |
->|------------------|---------------------------------------------|
->| **Rule ID**      | CVE-2026-18234                              |
->| **Category**     | Dependency Vulnerability                    |
->| **CWE**          | CWE-918: Server-Side Request Forgery        |
->| **OWASP**        | A10:2021 – Server-Side Request Forgery      |
->| **Remediation**  | Upgrade axios to version 1.7.0 or later     |
->| **References**   | Link to NVD advisory and upstream fix       |
+| Field            | Example Value                               |
+|------------------|---------------------------------------------|
+| **Rule ID**      | CVE-2026-18234                              |
+| **Category**     | Dependency Vulnerability                    |
+| **CWE**          | CWE-918: Server-Side Request Forgery        |
+| **OWASP**        | A10:2021 – Server-Side Request Forgery      |
+| **Remediation**  | Upgrade axios to version 1.7.0 or later     |
+| **References**   | Link to NVD advisory and upstream fix       |
 
 ---
 
 ## Inputs & Outputs
 
-### Required Inputs
+### Action Inputs
 
->| Input             | Description                         |
->|-------------------|-------------------------------------|
->| aqua-key          | AquaSec API Key credential          |
->| aqua-secret       | AquaSec API Secret credential       |
->| group-id          | AquaSec Group ID for authentication |
->| repository-id     | AquaSec Repository ID (UUID format) |
+| Input             | Description                         | Required |
+|-------------------|-------------------------------------|----------|
+| aqua-key          | AquaSec API Key credential          | Yes      |
+| aqua-secret       | AquaSec API Secret credential       | Yes      |
+| group-id          | AquaSec Group ID for authentication | Yes      |
+| repository-id     | AquaSec Repository ID (UUID format) | Yes      |
+| verbose-logging   | Enable detailed logging             | No       |
 
 ### Output
 
->| Output                   | Description                                |
->|--------------------------|--------------------------------------------|
->| nightscan-sarif-file     | Absolute path to the generated SARIF file  |
+| Output                   | Description                                |
+|--------------------------|--------------------------------------------|
+| nightscan-sarif-file     | Absolute path to the generated SARIF file  |
 
 The SARIF file is then passed to the `github/codeql-action/upload-sarif` action for upload
 to the Security and quality tab.
