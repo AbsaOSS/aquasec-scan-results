@@ -27,4 +27,4 @@ permissions:
 
 jobs:
   remove-label:
-    uses: AbsaOSS/organizational-workflows/.github/workflows/remove-adept-to-close-on-issue-close.yml@40457bc605a067300785cfb89f0b71eccd97213c
+    uses: AbsaOSS/organizational-workflows/.github/workflows/remove-adept-to-close-on-issue-close.yml@7e31c528c1e6cc4aeeb7ef1fa6d799d4aee6a0d0
