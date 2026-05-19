@@ -18,8 +18,8 @@
 This GitHub Action automates the integration of AquaSec security scan results into your GitHub workflow.
 It supports two operational modes:
 
-- **Night Scan** (default) — retrieves scan findings via the AquaSec API, converts them to SARIF format,
-  and makes them available for upload to GitHub's Code Scanning feature (Security tab).
+- **Night Scan** (default) — retrieves scan findings via the AquaSec API and outputs them as a
+  JSON file for downstream processing by other actions.
 - **Branch Comparison** — triggers a scan on the developer branch, compares findings against master,
   posts a severity breakdown as a PR comment, and **fails the workflow when new findings are detected**.
 
@@ -58,7 +58,6 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   aquasec-night-scan:
@@ -84,12 +83,6 @@ jobs:
           group-id: ${{ secrets.AQUA_GROUP_ID }}
           repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
           verbose-logging: 'false'
-
-      - name: Upload Scan Results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: ${{ steps.aquasec.outputs.nightscan-sarif-file }}
-          category: aquasec
 ```
 
 ### Branch Comparison Mode
@@ -228,7 +221,7 @@ The action provides the following outputs depending on the mode:
 
 | Output Name                | Mode              | Description                                      | Example Value                                                |
 |----------------------------|-------------------|--------------------------------------------------|--------------------------------------------------------------|
-| `nightscan-sarif-file`     | Night Scan        | Full path to the generated SARIF file             | `/home/runner/work/repo/aquasec_scan_2026-03-06_09-38.sarif` |
+| `nightscan-json-file`      | Night Scan        | Full path to the generated JSON findings file  | `/home/runner/work/repo/aquasec_scan_2026-03-06.json`        |
 | `comparison-summary-file`  | Branch Comparison | Full path to the Markdown comparison summary file | `/home/runner/work/repo/comparison_summary.md`               |
 
 > **Branch Comparison behavior:** When the comparison detects new findings in the developer branch,
@@ -245,12 +238,6 @@ The action provides the following outputs depending on the mode:
     aqua-secret: ${{ secrets.AQUA_SECRET }}
     group-id: ${{ secrets.AQUA_GROUP_ID }}
     repository-id: ${{ secrets.AQUA_REPOSITORY_ID }}
-
-- name: Upload SARIF to GitHub Security
-  uses: github/codeql-action/upload-sarif@v3
-  with:
-    sarif_file: ${{ steps.aquasec.outputs.nightscan-sarif-file }}
-    category: aquasec
 ```
 
 **Branch Comparison — usage example:**

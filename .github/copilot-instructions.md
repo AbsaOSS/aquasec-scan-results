@@ -2,7 +2,7 @@ Copilot instructions for AquaSec Scan Results GitHub Action
 
 Purpose
 GitHub Action that fetches security scan results from AquaSec. Two operational modes:
-- **Night Scan** (default): converts findings to SARIF for GitHub Security tab integration.
+- **Night Scan** (default): fetches findings and outputs raw JSON for downstream processing.
 - **Branch Comparison** (`dev-branch-comparison: 'true'`): triggers a dev-branch scan, compares findings against master, posts a Markdown summary to the PR, and fails the workflow when new findings are detected.
 
 Structure
@@ -13,7 +13,7 @@ Structure
 - Constants: `src/utils/constants.py`
 - Utilities: `src/utils/utils.py`, `src/utils/logging_config.py`
 - Mode orchestrators: `src/modes/night_scan_mode.py`, `src/modes/branch_comparison_mode.py`
-- Services: `src/services/` (authenticator, scan_fetcher, scan_trigger, sarif_convertor, branch_comparator)
+- Services: `src/services/` (authenticator, scan_fetcher, scan_trigger, branch_comparator)
 
 Inputs (via environment variables with INPUT_ prefix)
 - AQUA_KEY, AQUA_SECRET, GROUP_ID, REPOSITORY_ID (required)
@@ -23,7 +23,7 @@ Inputs (via environment variables with INPUT_ prefix)
 - BRANCH_COMPARISON_POLL_TIMEOUT (optional, default 600)
 
 Outputs
-- `nightscan-sarif-file` — path to SARIF file (night scan mode)
+- `nightscan-json-file` — path to JSON findings file (night scan mode)
 - `comparison-summary-file` — path to Markdown summary (branch comparison mode)
 
 Failure behaviour

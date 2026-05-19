@@ -4,10 +4,8 @@
 
 Night Scan Mode provides **continuous, automated security monitoring** for your repository by **AquaSec**.
 It is supposed to run on a nightly schedule (or any cron-based trigger), retrieves the latest security scan
-findings from AquaSec, converts them to the industry-standard
-[SARIF](https://sarifweb.azurewebsites.net/) format, and uploads them to
-the **GitHub Security and quality tab**. This gives your team a daily security posture snapshot without
-any manual effort.
+findings from AquaSec, and saves them as a JSON file. This raw findings data can then be consumed by
+downstream actions for further processing (e.g., issue creation, notifications).
 
 > For setup instructions and workflow configuration, see the main [README](../README.md).
 
@@ -19,14 +17,12 @@ any manual effort.
 flowchart LR
     A["⏰ Nightly Schedule\n(cron trigger)"] --> B["🔑 Authenticate\nwith AquaSec API"]
     B --> C["📥 Fetch Scan\nFindings"]
-    C --> D["🔄 Convert to\nSARIF Format"]
-    D --> E["📤 Upload to GitHub\nSecurity Tab"]
+    C --> D["💾 Save JSON\nFindings File"]
 
     style A fill:#2e5090,color:#fff,stroke:#1e3a70
     style B fill:#b07a1e,color:#fff,stroke:#8a5e10
     style C fill:#2a7a6a,color:#fff,stroke:#1a5a4a
-    style D fill:#5a3d8a,color:#fff,stroke:#3a1d6a
-    style E fill:#2a7a40,color:#fff,stroke:#1a5a28
+    style D fill:#2a7a40,color:#fff,stroke:#1a5a28
 ```
 
 1. **Scheduled Trigger** — A GitHub Actions cron schedule triggers the workflow automatically
@@ -39,62 +35,17 @@ flowchart LR
    from the latest AquaSec scan. Results are fetched page by page to handle repositories
    with large numbers of findings.
 
-4. **SARIF Conversion** — Each finding is mapped to a SARIF 2.1.0 rule and result, preserving
-   severity levels (Critical, High, Medium, Low), affected file locations, remediation guidance,
-   CWE references, and OWASP classifications.
-
-5. **Upload to GitHub** — The generated SARIF file is uploaded to GitHub's Code Scanning feature,
-   making findings visible directly in the **Security tab** of the repository.
+4. **Save JSON File** — The raw findings response is saved as a JSON file, making it available
+   as an output for downstream workflow steps.
 
 ---
 
 ## Benefits
 
 - **Zero manual effort** — scans run on autopilot every night
-- **Security tab integration** — findings appear alongside other code scanning alerts in GitHub
-- **Standard format** — SARIF is supported by GitHub, VS Code, and many other tools, making it
-  easy to integrate into existing security workflows
-- **Rich finding details** — each alert includes all the important information that AquaSec provides
-- **Historical tracking** — GitHub retains scan history, allowing teams to track security posture
-  over time and measure improvement
-
----
-
-## What You See in GitHub
-
-After a successful Night Scan run, findings appear in **Security and quality → Code scanning alerts**.
-
-#### Security Alert
-
-| Field                | Example Value                                              |
-|----------------------|------------------------------------------------------------|
-| **Title**            | axios: Server-Side Request Forgery via redirect handling   |
-| **Alert hash**       | c3d9ee12f1bb52a9e08977c3e5108900                           |
-| **Artifact**         | backend/package.json                                       |
-| **Type**             | vulnerabilities                                            |
-| **Vulnerability**    | CVE-2026-18234                                             |
-| **Severity**         | HIGH                                                       |
-| **Repository**       | my-org/my-repo                                             |
-| **Reachable**        | True                                                       |
-| **Scan date**        | 2026-04-09T02:24:10.000Z                                   |
-| **First seen**       | 2026-03-01T08:00:00.000Z                                   |
-| **SCM file**         | Link to the exact file and commit in GitHub                |
-| **Installed version**| 1.6.5                                                      |
-| **Start / End line** | 42 / 42                                                    |
-| **Message**          | Full description of the vulnerability                      |
-
-#### Security Rule
-
-Each alert is also associated with a security rule that describes **why** the finding was flagged.
-
-| Field            | Example Value                               |
-|------------------|---------------------------------------------|
-| **Rule ID**      | CVE-2026-18234                              |
-| **Category**     | Dependency Vulnerability                    |
-| **CWE**          | CWE-918: Server-Side Request Forgery        |
-| **OWASP**        | A10:2021 – Server-Side Request Forgery      |
-| **Remediation**  | Upgrade axios to version 1.7.0 or later     |
-| **References**   | Link to NVD advisory and upstream fix       |
+- **Raw data output** — full AquaSec findings in JSON format for flexible downstream processing
+- **Decoupled architecture** — separate actions can convert, filter, or route findings as needed
+- **Historical tracking** — JSON artifacts can be stored for trend analysis
 
 ---
 
@@ -112,12 +63,12 @@ Each alert is also associated with a security rule that describes **why** the fi
 
 ### Output
 
-| Output                   | Description                                |
-|--------------------------|--------------------------------------------|
-| nightscan-sarif-file     | Absolute path to the generated SARIF file  |
+| Output              | Description                                       |
+|---------------------|---------------------------------------------------|
+| nightscan-json-file | Absolute path to the generated JSON findings file |
 
-The SARIF file is then passed to the `github/codeql-action/upload-sarif` action for upload
-to the Security and quality tab.
+The JSON file contains the raw AquaSec scan response and can be passed to downstream actions
+for further processing.
 
 ---
 

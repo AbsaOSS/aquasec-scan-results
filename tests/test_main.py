@@ -30,12 +30,12 @@ from src.action_inputs import ActionInputs
 
 def test_run_standard_mode_sets_nightscan_output(mocker, mock_main_setup):
     mock_night_scan = mocker.patch("main.NightScanMode")
-    mock_night_scan.return_value.run.return_value = "/abs/path/scan.sarif"
+    mock_night_scan.return_value.run.return_value = "/abs/path/scan.json"
     mock_set_output = mocker.patch("main.set_action_output")
 
     run()
 
-    mock_set_output.assert_called_once_with("nightscan-sarif-file", "/abs/path/scan.sarif")
+    mock_set_output.assert_called_once_with("nightscan-json-file", "/abs/path/scan.json")
 
 
 def test_run_exits_when_validation_fails(mocker):

@@ -19,7 +19,7 @@ Data types for AquaSec scan results project.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, TypedDict
+from typing import TypedDict
 
 
 # Shared for both modes
@@ -28,11 +28,6 @@ class ScanResponse(TypedDict, total=False):
 
     total: int
     data: list
-
-
-# Night Scan mode
-SarifFinding = dict[str, Any]
-SarifFindingsList = list[SarifFinding]
 
 
 # Branch Comparison mode

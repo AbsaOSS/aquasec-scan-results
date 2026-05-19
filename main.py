@@ -62,8 +62,8 @@ def run() -> None:
             summary_file, has_new_findings = BranchComparisonMode(bearer_token).run()
             set_action_output("comparison-summary-file", summary_file)
         else:
-            sarif_filepath = NightScanMode(bearer_token).run()
-            set_action_output("nightscan-sarif-file", sarif_filepath)
+            json_filepath = NightScanMode(bearer_token).run()
+            set_action_output("nightscan-json-file", json_filepath)
 
     except (ValueError, RequestException, IOError) as e:
         logger.exception("AquaSec Scan Results - Failed: %s", str(e))

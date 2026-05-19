@@ -40,15 +40,15 @@ def get_action_input(name: str, default: str = "") -> str:
     return os.getenv(f'INPUT_{name.replace("-", "_").upper()}', default=default)
 
 
-def get_sarif_output_filename() -> str:
+def get_output_filename() -> str:
     """
-    Generate SARIF unique output filename with GH Action run timestamp.
+    Generate unique output filename with date stamp.
 
     Returns:
-        SARIF unique filename with .sarif extension.
+        Unique filename with .json extension.
     """
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    return f"aquasec_scan_{timestamp}.sarif"
+    date_stamp = datetime.now().strftime("%Y-%m-%d")
+    return f"aquasec_scan_{date_stamp}.json"
 
 
 def set_action_output(name: str, value: str, default_output_path: str = "default_output.txt") -> None:

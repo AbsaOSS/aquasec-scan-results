@@ -27,17 +27,16 @@ from src.modes.night_scan_mode import NightScanMode
 # run
 
 
-def test_run_returns_sarif_filepath(mocker):
+def test_run_returns_json_filepath(mocker):
     mocker.patch("src.modes.night_scan_mode.ScanFetcher")
-    mocker.patch("src.modes.night_scan_mode.SarifConvertor")
     mocker.patch("builtins.open", mocker.mock_open())
     mocker.patch("src.modes.night_scan_mode.json.dump")
-    mocker.patch("src.modes.night_scan_mode.os.path.abspath", return_value="/abs/path/scan.sarif")
-    mocker.patch("src.modes.night_scan_mode.get_sarif_output_filename", return_value="scan.sarif")
+    mocker.patch("src.modes.night_scan_mode.os.path.abspath", return_value="/abs/path/scan.json")
+    mocker.patch("src.modes.night_scan_mode.get_output_filename", return_value="scan.json")
 
     actual = NightScanMode("test_token").run()
 
-    assert "/abs/path/scan.sarif" == actual
+    assert "/abs/path/scan.json" == actual
 
 
 def test_run_raises_when_fetch_fails(mocker):
@@ -50,7 +49,6 @@ def test_run_raises_when_fetch_fails(mocker):
 
 def test_run_raises_when_write_fails(mocker):
     mocker.patch("src.modes.night_scan_mode.ScanFetcher")
-    mocker.patch("src.modes.night_scan_mode.SarifConvertor")
     mocker.patch("builtins.open", side_effect=IOError("Disk full"))
 
     with pytest.raises(IOError):

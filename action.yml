@@ -1,5 +1,5 @@
 name: 'AquaSec Scan Results'
-description: 'Process and handle AquaSec security scan results for GitHub Security tab integration'
+description: 'Fetch and process AquaSec security scan results'
 
 branding:
   icon: 'shield'
@@ -36,9 +36,9 @@ inputs:
     default: '600'
 
 outputs:
-  nightscan-sarif-file:
-    description: 'Full path to the generated SARIF file from the night scan'
-    value: ${{ steps.aquasec-scan-results.outputs.nightscan-sarif-file }}
+  nightscan-json-file:
+    description: 'Full path to the generated JSON findings file from the night scan'
+    value: ${{ steps.aquasec-scan-results.outputs.nightscan-json-file }}
   comparison-summary-file:
     description: 'Full path to the comparison summary Markdown file'
     value: ${{ steps.aquasec-scan-results.outputs.comparison-summary-file }}

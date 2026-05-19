@@ -36,11 +36,6 @@ SCAN_API_URL = "https://eu-1.codesec.aquasec.com/api/v1/scans/results"
 PAGE_SIZE = 100
 FETCH_SLEEP_SECONDS = 2
 
-# SARIF converting
-SARIF_VERSION = "2.1.0"
-SARIF_SCHEMA_URL = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
-SARIF_NA_PLACEHOLDER = "N/A"
-
 # Scan triggering
 SCAN_TRIGGER_URL = "https://eu-1.codesec.aquasec.com/api/v2/repositories/scan"
 BRANCH_STATUS_URL = "https://api.eu-1.supply-chain.cloud.aquasec.com/v2/build/repositories"
@@ -50,7 +45,3 @@ POLL_TIMEOUT = 600
 # Branch comparison
 SEVERITY_MAP: dict[int, str] = {1: "CRITICAL", 2: "HIGH", 3: "MEDIUM", 4: "LOW"}
 SEVERITY_ORDER: list[str] = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
-
-# SARIF field truncation limits
-RULE_ID_MAX_LENGTH = 512
-TITLE_MAX_LENGTH = 1024
